@@ -1,10 +1,10 @@
 @extends('layouts.auth')
 
 @section('left-content')
-<h1 class="text-4xl font-bold text-white leading-normal">
+<h1 class="text-4xl font-bold text-white leading-norma text-balance">
     Selamat Datang di SI-GAMER
 </h1>
-<p class="text-md font-medium text-[#8B7EA1]">
+<p class="text-md font-medium text-[#8B7EA1] text-balance">
     Daftarkan Akun dan mulai booking PlayStation & PC Gaming dengan mudah, cepat, dan aman.
 </p>
 @endsection
@@ -20,34 +20,54 @@
     <div class="flex flex-col gap-2">
         <label for="name" class="text-white font-semibold">Nama Lengkap</label>
         <div class="relative">
-            <i class="top-1/2 -translate-y-1/2 ph ph-user absolute left-4 text-[#8B7EA1] text-lg"></i>
-            <input type="text" name="nama" value="{{ old('nama') }}" class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm" placeholder="Masukkan nama" required>
+            <i data-lucide="user" stroke-width="1.5" class="w-5 h-5 top-1/2 -translate-y-1/2 absolute left-4 text-[#8B7EA1]"></i>
+            <input type="text"
+                   name="nama"
+                   value="{{ old('nama') }}"
+                   placeholder="Masukkan nama"
+                   class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm"
+                   required>
         </div>
     </div>
 
     <div class="flex flex-col gap-2">
         <label for="email" class="text-white font-semibold">Email</label>
         <div class="relative">
-            <i class="top-1/2 -translate-y-1/2 ph ph-envelope absolute left-4 text-[#8B7EA1] text-lg"></i>
-            <input type="email" name="email" value="{{ old('email') }}" class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm" placeholder="nama@gmail.com" required>
+            <i data-lucide="mail" stroke-width="1.5" class="w-5 h-5 top-1/2 -translate-y-1/2 absolute left-4 text-[#8B7EA1]"></i>
+            <input type="email"
+                   name="email"
+                   value="{{ old('email') }}"
+                   placeholder="nama@gmail.com"
+                   class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm"
+                   required>
         </div>
     </div>
 
     <div class="flex flex-col gap-2">
         <label for="password" class="text-white font-semibold">Password</label>
         <div class="relative">
-            <i class="top-1/2 -translate-y-1/2 ph ph-lock absolute left-4 text-[#8B7EA1] text-lg"></i>
-            <input type="password" name="password" class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm" placeholder="•••••••••••" required>
-            <i class="top-1/2 -translate-y-1/2 ph ph-eye absolute right-4 text-[#8B7EA1] text-lg cursor-pointer"></i>
+            <i data-lucide="lock" stroke-width="1.5" class="w-5 h-5 top-1/2 -translate-y-1/2 absolute left-4 text-[#8B7EA1]"></i>
+            <input id="password"
+                   type="password"
+                   name="password"
+                   placeholder="•••••••••••"
+                   class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm"
+                   required>
+            <i id="eye-password" class="top-1/2 -translate-y-1/2 ph ph-eye absolute right-4 text-[#8B7EA1] text-lg cursor-pointer"></i>
         </div>
     </div>
 
     <div class="flex flex-col gap-2">
         <label for="password" class="text-white font-semibold">Konfirmasi Password</label>
         <div class="relative">
-            <i class="top-1/2 -translate-y-1/2 ph ph-lock absolute left-4 text-[#8B7EA1] text-lg"></i>
-            <input type="password" name="password_confirmation" class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm" placeholder="•••••••••••" required>
-            <i class="top-1/2 -translate-y-1/2 ph ph-eye absolute right-4 text-[#8B7EA1] text-lg cursor-pointer"></i>
+            <i data-lucide="lock" stroke-width="1.5" class="w-5 h-5 top-1/2 -translate-y-1/2 absolute left-4 text-[#8B7EA1]"></i>
+            <input id="password-confirmation"
+                   type="password"
+                   name="password_confirmation"
+                   placeholder="•••••••••••"
+                   class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-lg pl-11 pr-4 py-4 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors placeholder-[#8B7EA1]/50 text-sm"
+                   required>
+            <i id="eye-password-confirmation" class="top-1/2 -translate-y-1/2 ph ph-eye absolute right-4 text-[#8B7EA1] text-lg cursor-pointer"></i>
         </div>
     </div>
 
@@ -82,4 +102,36 @@
         Sudah punya akun? <a href="/" class="cursor-pointer text-purple-400 font-semibold hover:text-purple-500 hover:underline transition-colors">Login</a>
     </p>
 </div>
+
+<script>
+    const eyePassword = document.getElementById('eye-password');
+    const password = document.getElementById('password');
+
+    const eyePasswordConfirmation = document.getElementById('eye-password-confirmation');
+    const passwordConfirmation = document.getElementById('password-confirmation');
+
+    eyePassword.addEventListener('click', () => {
+        if (password.type === 'password') {
+            password.type = 'text';
+            eyePassword.classList.remove('ph-eye');
+            eyePassword.classList.add('ph-eye-slash');
+        } else {
+            password.type = 'password';
+            eyePassword.classList.remove('ph-eye-slash');
+            eyePassword.classList.add('ph-eye');
+        }
+    });
+
+    eyePasswordConfirmation.addEventListener('click', () => {
+        if (passwordConfirmation.type === 'password') {
+            passwordConfirmation.type = 'text';
+            eyePasswordConfirmation.classList.remove('ph-eye');
+            eyePasswordConfirmation.classList.add('ph-eye-slash');
+        } else {
+            passwordConfirmation.type = 'password';
+            eyePasswordConfirmation.classList.remove('ph-eye-slash');
+            eyePasswordConfirmation.classList.add('ph-eye');
+        }
+    });
+</script>
 @endsection

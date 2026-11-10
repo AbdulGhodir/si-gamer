@@ -8,7 +8,6 @@
 </head>
 <body class="bg-[#0f0e17] text-gray-200 font-sans antialiased flex h-screen overflow-hidden">
 
-    <!-- SIDEBAR UTAMA YANG SERAGAM -->
     <aside class="w-64 bg-[#141221] border-r border-gray-800 flex flex-col justify-between hidden md:flex">
         <div>
             <div class="p-5 flex items-center gap-3 border-b border-gray-800/60">
@@ -73,10 +72,10 @@
         </div>
     </aside>
 
-    <!-- KONTEN DINAMIS TIAP HALAMAN -->
     <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-[#0b0a12]">
         @yield('content')
     </main>
 
+    <x-lucide />
 </body>
 </html>

@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
 class AdminDashboardController extends Controller
@@ -26,7 +27,6 @@ class AdminDashboardController extends Controller
     {
         $user = Auth::user();
         
-        // Data dummy sementara untuk daftar pengguna
         $users = [
             ['id' => 1, 'nama' => 'Raka Pratama', 'email' => 'raka@gmail.com', 'role' => 'Customer', 'status' => 'Aktif'],
             ['id' => 2, 'nama' => 'Maya Lestari', 'email' => 'maya@gmail.com', 'role' => 'Customer', 'status' => 'Aktif'],

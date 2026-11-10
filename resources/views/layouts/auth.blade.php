@@ -1,11 +1,11 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SI Gamer - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
@@ -24,7 +24,6 @@
             @yield('left-content')
         </div>
     
-
         <div class=" flex w-full justify-between gap-4 border-t-2 border-purple-500/30 pt-10">
             <div class="flex flex-col items-center gap-2">
                 <i class="ph ph-clock font-semibold text-2xl text-purple-500"></i>
@@ -44,11 +43,12 @@
     
     </div>
 
-    
     <div class="bg-[#0B0812] w-1/2 h-full flex items-center justify-center">
-        <div class="flex flex-col gap-2 w-lg">
+        <div class="flex flex-col gap-2 w-full p-24">
             @yield('right-content')
         </div>
     </div>
+
+    <x-lucide />
 </body>
 </html>

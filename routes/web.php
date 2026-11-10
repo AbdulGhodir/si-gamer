@@ -2,12 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CustomerDashboardController;
-use App\Http\Controllers\AdminDashboardController;
-use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Customer\CustomerBookingController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Staff\StaffController;
 
-// Auth Routes
 Route::get('/', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
@@ -16,10 +16,8 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.po
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Protected Routes
 Route::middleware('auth')->group(function () {
 
-    // === ADMIN ROUTES ===
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/users', [AdminDashboardController::class, 'users'])->name('admin.users');
     Route::get('/admin/devices', [AdminDashboardController::class, 'devices'])->name('admin.devices');
@@ -30,7 +28,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/maintenance', [AdminDashboardController::class, 'maintenance'])->name('admin.maintenance');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports');
 
-   // === STAFF ROUTES ===
     Route::get('/staff/dashboard', [StaffController::class, 'dashboard'])->name('staff.dashboard');
     Route::post('/staff/booking/{id}/check-in', [StaffController::class, 'checkIn'])->name('staff.booking.checkin');
     Route::post('/staff/booking/{id}/check-out', [StaffController::class, 'checkOut'])->name('staff.booking.checkout');
@@ -38,11 +35,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/staff/booking/walk-in', [StaffController::class, 'storeWalkIn'])->name('staff.booking.walkin.store');
     Route::post('/staff/maintenance', [StaffController::class, 'storeMaintenance'])->name('staff.maintenance.store');
 
-    // === CUSTOMER ROUTES ===
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
+    Route::get('/customer/booking', [CustomerBookingController::class, 'booking'])->name('customer.booking');
     Route::post('/customer/booking', [CustomerDashboardController::class, 'storeBooking'])->name('customer.booking.store');
-    Route::post('/customer/membership/aktifkan', [
-        CustomerDashboardController::class,
-        'aktifkanMembership'
-    ])->name('customer.membership.aktifkan');
+    Route::get('/customer/riwayat', [CustomerBookingController::class, 'riwayat'])->name('customer.riwayat');
+    Route::post('/customer/membership/aktifkan', [CustomerDashboardController::class, 'aktifkanMembership'])->name('customer.membership.aktifkan');
 });

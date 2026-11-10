@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Staff;
 
 use App\Models\Booking;
 use App\Models\Device;
 use App\Models\Maintenance;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +16,6 @@ class StaffController extends Controller
     {
         $today = Carbon::today();
 
-        // 1. Kartu Statistik Atas
         $bookingHariIni = Booking::whereDate('waktu_mulai', $today)->count();
         $bookingAkanDatang = Booking::whereDate('waktu_mulai', $today)
             ->where('status', 'menunggu')
@@ -27,7 +27,6 @@ class StaffController extends Controller
         $perangkatSiap = Device::where('status', 'tersedia')->count();
         $perluMaintenance = Device::where('status', 'perbaikan')->count();
 
-        // 2. Daftar Booking Hari Ini (Search & Filter Status)
         $queryBooking = Booking::with(['user', 'device'])
             ->whereDate('waktu_mulai', $today)
             ->latest('waktu_mulai');
@@ -49,19 +48,15 @@ class StaffController extends Controller
         $daftarBooking = $queryBooking->paginate(5)->withQueryString();
         $totalSelesaiHariIni = Booking::whereDate('waktu_mulai', $today)->where('status', 'selesai')->count();
 
-        // 3. Sesi Aktif
         $sesiAktif = Booking::with(['user', 'device'])
             ->where('status', 'bermain')
             ->orderBy('waktu_selesai', 'asc')
             ->get();
 
-        // 4. Status Seluruh Perangkat
         $devices = Device::orderBy('nama_device')->get()->groupBy('tipe');
 
-        // 5. Laporan Perangkat Perbaikan
         $perangkatMaintenance = Device::where('status', 'perbaikan')->first();
 
-        // Data untuk Dropdown Modal Walk-in
         $devicesTersedia = Device::where('status', 'tersedia')->get();
 
         return view('staff.dashboard', compact(
@@ -80,7 +75,6 @@ class StaffController extends Controller
         ));
     }
 
-    // Check-in Pelanggan (Mulai Bermain)
     public function checkIn($id)
     {
         $booking = Booking::findOrFail($id);
@@ -99,7 +93,6 @@ class StaffController extends Controller
         return back()->with('success', "Booking {$booking->kode_booking} berhasil Check-in. Sesi dimulai.");
     }
 
-    // Check-out Pelanggan (Selesai Bermain)
     public function checkOut($id)
     {
         $booking = Booking::findOrFail($id);
@@ -116,7 +109,6 @@ class StaffController extends Controller
         return back()->with('success', "Sesi {$booking->kode_booking} telah diselesaikan.");
     }
 
-    // Tambah Durasi (+1 Jam)
     public function addDuration($id)
     {
         $booking = Booking::findOrFail($id);
@@ -132,7 +124,6 @@ class StaffController extends Controller
         return back()->with('success', "Durasi {$booking->kode_booking} berhasil ditambah 1 jam.");
     }
 
-    // Booking Langsung / Walk-in
     public function storeWalkIn(Request $request)
     {
         $request->validate([
@@ -146,7 +137,7 @@ class StaffController extends Controller
 
         $booking = Booking::create([
             'kode_booking' => 'GH-' . now()->format('dmy') . '-' . rand(100, 999),
-            'id_user' => Auth::id(), // Dihubungkan ke user staff pembuat
+            'id_user' => Auth::id(),
             'id_device' => $device->id,
             'waktu_mulai' => now(),
             'waktu_selesai' => now()->addHours($durasi),
@@ -163,7 +154,6 @@ class StaffController extends Controller
         return back()->with('success', "Booking walk-in {$booking->kode_booking} berhasil dibuat dan dimulai!");
     }
 
-    // Laporkan Kendala / Ubah Status Device ke Perbaikan
     public function storeMaintenance(Request $request)
     {
         $request->validate([

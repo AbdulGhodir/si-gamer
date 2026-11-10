@@ -1,7 +1,6 @@
 @extends('layouts.staff')
 
 @section('content')
-<!-- Header Utama -->
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
     <div>
         <h2 class="text-2xl font-bold text-white tracking-tight">Operasional hari ini</h2>
@@ -13,7 +12,6 @@
     </button>
 </div>
 
-<!-- 4 KARTU STATISTIK RINGKASAN -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="bg-[#12131a] border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between">
         <div class="flex justify-between items-start text-slate-400 mb-2">
@@ -62,9 +60,7 @@
     </div>
 </div>
 
-<!-- BARIS TENGAH: TABEL BOOKING & PANEL SESI AKTIF -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-    <!-- Tabel Booking Hari Ini -->
     <div id="table-booking" class="lg:col-span-2 bg-[#12131a] border border-slate-800/80 rounded-xl p-5">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <div class="flex items-baseline space-x-2">
@@ -74,7 +70,6 @@
             <a href="{{ route('staff.dashboard') }}" class="text-xs text-purple-400 hover:text-purple-300 font-medium">Semua booking &rarr;</a>
         </div>
 
-        <!-- Filter Pencarian & Status Form -->
         <form method="GET" action="{{ route('staff.dashboard') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div class="sm:col-span-2 relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-xs"></i>
@@ -91,7 +86,6 @@
             </div>
         </form>
 
-        <!-- Tabel Data -->
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead>
@@ -161,7 +155,6 @@
             </table>
         </div>
 
-        <!-- Footer Pagination -->
         <div class="flex justify-between items-center text-[11px] text-slate-400 pt-4 mt-2 border-t border-slate-800/80">
             <span>{{ $daftarBooking->count() }} dari {{ $daftarBooking->total() }} booking &middot; {{ $totalSelesaiHariIni }} sesi selesai</span>
             <div>
@@ -170,7 +163,6 @@
         </div>
     </div>
 
-    <!-- Sesi Aktif (Panel Kanan) -->
     <div id="sesi-aktif" class="bg-[#12131a] border border-slate-800/80 rounded-xl p-5 flex flex-col justify-between">
         <div>
             <div class="flex justify-between items-center mb-4">
@@ -220,9 +212,7 @@
     </div>
 </div>
 
-<!-- BARIS BAWAH: STATUS PERANGKAT & MAINTENANCE -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Grid Status Perangkat -->
     <div id="status-perangkat" class="lg:col-span-2 bg-[#12131a] border border-slate-800/80 rounded-xl p-5">
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-baseline space-x-2">
@@ -270,7 +260,6 @@
         </div>
     </div>
 
-    <!-- Panel Status Maintenance -->
     <div class="bg-[#12131a] border border-slate-800/80 rounded-xl p-5 flex flex-col justify-between">
         <div>
             <h3 class="text-sm font-bold text-white mb-4">Laporan maintenance</h3>
