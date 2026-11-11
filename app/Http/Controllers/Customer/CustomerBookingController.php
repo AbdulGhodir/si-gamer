@@ -4,24 +4,40 @@ namespace App\Http\Controllers\Customer;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerBookingController extends Controller
 {
-    public function booking() {
+    public function booking()
+    {
         $selectedUnit = request('unit', 'PlayStation 5 - A');
+
+        // Cek membership user yang sedang login
+        $isMember = DB::table('memberships')
+            ->where('id_user', Auth::id())
+            ->where('status', 'aktif')
+            ->where(function ($query) {
+                $query->whereNull('tanggal_berakhir')
+                    ->orWhereDate('tanggal_berakhir', '>=', now()->toDateString());
+            })
+            ->exists();
+
         $devicesList = [
             ['nama' => 'PlayStation 5 - A', 'tipe' => 'PS5', 'harga' => 25000],
             ['nama' => 'PlayStation 5 - B', 'tipe' => 'PS5', 'harga' => 25000],
-            ['nama' => 'PC Gaming - VIP 01', 'tipe' => 'PC', 'harga' => 20000],
-            ['nama' => 'PlayStation 4 - VIP 1', 'tipe' => 'PS4', 'harga' => 15000],
-            ['nama' => 'PC Gaming - Reguler 01', 'tipe' => 'PC', 'harga' => 12000],
-            ['nama' => 'PC Gaming - Reguler 02', 'tipe' => 'PC', 'harga' => 12000],
-            ['nama' => 'PlayStation 4 - Reguler B', 'tipe' => 'PS4', 'harga' => 10000],
+            ['nama' => 'PC Gaming - VIP', 'tipe' => 'PC', 'harga' => 20000],
+            ['nama' => 'PlayStation 4 - VIP', 'tipe' => 'PS4', 'harga' => 15000],
+            ['nama' => 'PC Gaming', 'tipe' => 'PC', 'harga' => 12000],
+            ['nama' => 'PlayStation 4 - A', 'tipe' => 'PS4', 'harga' => 10000],
+            ['nama' => 'PlayStation 4 - B', 'tipe' => 'PS4', 'harga' => 10000],
+            ['nama' => 'PlayStation 5 - VIP', 'tipe' => 'PS5', 'harga' => 30000],
         ];
 
         return view('customer.booking', compact(
             'selectedUnit',
-            'devicesList'
+            'devicesList',
+            'isMember'
         ));
     }
     
