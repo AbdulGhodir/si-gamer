@@ -4,24 +4,19 @@ namespace App\Http\Controllers\Customer;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Device;
 
 class CustomerBookingController extends Controller
 {
-    public function booking() {
-        $selectedUnit = request('unit', 'PlayStation 5 - A');
-        $devicesList = [
-            ['nama' => 'PlayStation 5 - A', 'tipe' => 'PS5', 'harga' => 25000],
-            ['nama' => 'PlayStation 5 - B', 'tipe' => 'PS5', 'harga' => 25000],
-            ['nama' => 'PC Gaming - VIP 01', 'tipe' => 'PC', 'harga' => 20000],
-            ['nama' => 'PlayStation 4 - VIP 1', 'tipe' => 'PS4', 'harga' => 15000],
-            ['nama' => 'PC Gaming - Reguler 01', 'tipe' => 'PC', 'harga' => 12000],
-            ['nama' => 'PC Gaming - Reguler 02', 'tipe' => 'PC', 'harga' => 12000],
-            ['nama' => 'PlayStation 4 - Reguler B', 'tipe' => 'PS4', 'harga' => 10000],
-        ];
+    public function booking(Request $request) {
+        $allDevices = Device::all();
+
+        $deviceId = $request->query('device', $allDevices->first()?->id);
+        $selectedUnit = Device::find($deviceId) ?? $allDevices->first();
 
         return view('customer.booking', compact(
             'selectedUnit',
-            'devicesList'
+            'allDevices',
         ));
     }
     

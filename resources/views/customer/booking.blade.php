@@ -27,11 +27,11 @@
                     <select id="select-unit" 
                             onchange="updateSummary()" 
                             class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm appearance-none focus:outline-none focus:border-purple-500 cursor-pointer pr-10">
-                        @foreach($devicesList as $dev)
-                            <option value="{{ $dev['nama'] }}" 
-                                    data-harga="{{ $dev['harga'] }}" 
-                                    {{ $selectedUnit === $dev['nama'] ? 'selected' : '' }}>
-                                {{ $dev['nama'] }} (Rp {{ number_format($dev['harga'], 0, ',', '.') }}/jam)
+                        @foreach($allDevices as $dev)
+                            <option value="{{ $dev->nama_device }}" 
+                                    data-harga="{{ $dev->harga_per_jam }}" 
+                                    {{ $selectedUnit && $selectedUnit->nama_device === $dev->nama_device ? 'selected' : '' }}>
+                                {{ $dev->nama_device }} (Rp {{ number_format($dev->harga_per_jam, 0, ',', '.') }}/jam)
                             </option>
                         @endforeach
                     </select>

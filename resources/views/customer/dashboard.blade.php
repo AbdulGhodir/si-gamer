@@ -33,41 +33,72 @@
             <h2 class="text-2xl font-bold text-white tracking-wide">Pilih Perangkat</h2>
         </div>
 
-        <div class="flex items-center gap-2 overflow-x-auto">
-            <button type="button" 
-                    onclick="filterCategory('all')" 
-                    id="btn-all" 
-                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white border border-white focus:outline-none transition-colors cursor-pointer">
-                Semua
-            </button>
-            <button type="button" 
-                    onclick="filterCategory('PC')" 
-                    id="btn-PC" 
-                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
-                PC Gaming
-            </button>
-            <button type="button" 
-                    onclick="filterCategory('PS5')" 
-                    id="btn-PS5" 
-                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
-                PlayStation 5
-            </button>
-            <button type="button" 
-                    onclick="filterCategory('PS4')" 
-                    id="btn-PS4" 
-                    class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
-                PlayStation 4
-            </button>
+        <div class="flex items-center gap-2 overflow-x-auto ">
+            <div class="flex items-center gap-2 overflow-x-auto">
+                <button type="button" 
+                        onclick="filterType('all')" 
+                        id="btn-all" 
+                        class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white border border-white focus:outline-none transition-colors cursor-pointer">
+                    Semua
+                </button>
+                <button type="button" 
+                        onclick="filterType('PC')" 
+                        id="btn-PC" 
+                        class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                    PC Gaming
+                </button>
+                <button type="button" 
+                        onclick="filterType('PS4')" 
+                        id="btn-PS4" 
+                        class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                    PlayStation 4
+                </button>
+                <button type="button" 
+                        onclick="filterType('PS5')" 
+                        id="btn-PS5" 
+                        class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                    PlayStation 5
+                </button>
+            </div>
+
+            <div class="h-6 w-px bg-white/50"></div>
+
+            <div>
+                <button type="button" 
+                        onclick="filterCategory('all')" 
+                        id="btn-category-all" 
+                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white border border-white focus:outline-none transition-colors cursor-pointer">
+                    Semua
+                </button>
+                <button type="button" 
+                        onclick="filterCategory('Reguler')" 
+                        id="btn-category-Reguler" 
+                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                    Reguler
+                </button>
+                <button type="button" 
+                        onclick="filterCategory('VIP')" 
+                        id="btn-category-VIP" 
+                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                    VIP
+                </button>
+                <button type="button" 
+                        onclick="filterCategory('VVIP')" 
+                        id="btn-category-VVIP" 
+                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                    VVIP
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="device-grid">
-        @foreach($dummyDevices as $device)
+        @foreach($devices as $device)
             <div class="device-card bg-[#130B29] border border-[#2D2442] hover:border-purple-500/60 rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-lg"
-                 data-tipe="{{ $device['tipe'] }}">
+                 data-tipe="{{ $device->tipe }}" data-category="{{ $device->kategori }}">
                 
                 <div class="w-full h-44 rounded-xl bg-[#0B0812] border border-[#2D2442] flex items-center justify-center mb-5">
-                    @if($device['tipe'] === 'PC')
+                    @if($device->tipe === 'PC')
                         <div class="flex flex-col items-center justify-center gap-2">
                             <div class="w-20 h-16 rounded-lg bg-linear-to-b from-[#38bdf8]/30 to-[#0284c7]/20 border border-sky-400/40 flex items-center justify-center shadow-md">
                                 <i class="ph ph-desktop text-4xl text-sky-400"></i>
@@ -84,21 +115,28 @@
                 </div>
 
                 <div class="flex flex-col gap-2 mb-6">
-                    <span class="text-[10px] font-bold tracking-wider uppercase text-purple-400">
-                        {{ $device['tipe'] }}
-                    </span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold tracking-wider uppercase text-purple-400">
+                            {{ $device->tipe }}
+                        </span>
+
+
+                        <span class="text-[14px] font-bold tracking-normal {{ $device->kategori === 'Reguler' ? 'text-purple-400' : 'text-amber-400' }}">
+                            {{ $device->kategori }}
+                        </span>
+                    </div>
                     
                     <h3 class="text-lg font-bold text-white tracking-wide leading-tight">
-                        {{ $device['nama_device'] }}
+                        {{ $device->nama_device }}
                     </h3>
 
                     <p class="text-xs text-[#8B7EA1] leading-relaxed line-clamp-2">
-                        {{ $device['spesifikasi'] }}
+                        {{ $device->spesifikasi }}
                     </p>
 
                     <div class="mt-2 flex items-baseline gap-1">
                         <span class="text-xl font-bold text-white">
-                            Rp{{ number_format($device['harga_per_jam'], 0, ',', '.') }}
+                            Rp{{ number_format($device->harga_per_jam, 0, ',', '.') }}
                         </span>
                         <span class="text-xs text-[#8B7EA1]">/ jam</span>
                     </div>
@@ -107,17 +145,17 @@
                 <div class="flex items-center justify-between pt-4 border-t border-[#2D2442]">
                     
                     <div>
-                        @if($device['status'] === 'tersedia')
+                        @if($device->status === 'tersedia')
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                                 <span class="text-xs font-semibold text-emerald-400">Tersedia</span>
                             </div>
-                        @elseif($device['status'] === 'penuh')
+                        @elseif($device->status === 'penuh')
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-red-400"></span>
                                 <span class="text-xs font-semibold text-red-400">Penuh</span>
                             </div>
-                        @elseif($device['status'] === 'maintenance')
+                        @elseif($device->status === 'maintenance')
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                                 <span class="text-xs font-semibold text-amber-400">Maintenance</span>
@@ -126,18 +164,18 @@
                     </div>
 
                     <div>
-                        @if($device['status'] === 'tersedia')
-                            <a href="{{ route('customer.booking') }}" 
+                        @if($device->status === 'tersedia')
+                            <a href="{{ route('customer.booking', ['device' => $device->id]) }}" 
                                class="inline-block px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs tracking-wide transition-colors cursor-pointer shadow-md shadow-purple-600/20 text-center">
                                 Booking
                             </a>
-                        @elseif($device['status'] === 'penuh')
+                        @elseif($device->status === 'penuh')
                             <button type="button" 
                                     disabled 
                                     class="px-5 py-2 rounded-lg bg-[#161124] text-[#8B7EA1] border border-[#2D2442] font-semibold text-xs tracking-wide cursor-not-allowed">
                                 Penuh
                             </button>
-                        @elseif($device['status'] === 'maintenance')
+                        @elseif($device->status === 'maintenance')
                             <button type="button" 
                                     disabled 
                                     class="px-5 py-2 rounded-lg bg-[#161124] text-[#8B7EA1] border border-[#2D2442] font-semibold text-xs tracking-wide cursor-not-allowed">
@@ -152,7 +190,12 @@
 </div>
 
 <script>
-    function filterCategory(type) {
+    let selectedType = 'all';
+    let selectedCategory = 'all';
+
+    function filterType(type='all', category='all') {
+        selectedType = type;
+
         const buttons = document.querySelectorAll('.filter-btn');
         buttons.forEach(btn => {
             btn.classList.remove('bg-purple-600', 'text-white', 'border-white');
@@ -165,9 +208,38 @@
             activeBtn.classList.add('bg-purple-600', 'text-white', 'border-white');
         }
 
+        applyFilters();
+    }
+
+    function filterCategory(category) {
+        selectedCategory = category;
+
+        const buttons = document.querySelectorAll('.filter-btn-category');
+        buttons.forEach(btn => {
+            btn.classList.remove('bg-purple-600', 'text-white', 'border-white');
+            btn.classList.add('bg-[#161124]', 'text-[#8B7EA1]', 'border-[#2D2442]');
+        });
+
+        const activeBtn = document.getElementById('btn-category-' + category);
+        if (activeBtn) {
+            activeBtn.classList.remove('bg-[#161124]', 'text-[#8B7EA1]', 'border-[#2D2442]');
+            activeBtn.classList.add('bg-purple-600', 'text-white', 'border-white');
+        }
+
+        applyFilters();
+    }
+
+    function applyFilters() {
         const cards = document.querySelectorAll('.device-card');
+
         cards.forEach(card => {
-            if (type === 'all' || card.getAttribute('data-tipe') === type) {
+            const cardType = card.getAttribute('data-tipe');
+            const cardCategory = card.getAttribute('data-category');
+
+            const typeMatch = (selectedType === 'all' || cardType === selectedType);
+            const categoryMatch = (selectedCategory === 'all' || cardCategory === selectedCategory);
+
+            if (typeMatch && categoryMatch) {
                 card.style.display = 'flex';
             } else {
                 card.style.display = 'none';
