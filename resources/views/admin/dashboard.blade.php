@@ -126,7 +126,9 @@
                     <div>
                         <div class="flex justify-between items-center mb-2">
                             <h3 class="font-semibold text-white">Operasional hari ini</h3>
-                            <span class="text-xs text-purple-400 cursor-pointer">Detail →</span>
+                            <a href="{{ route('admin.reports') }}" class="text-xs text-purple-400 hover:text-purple-300 hover:underline transition">
+                                Detail →
+                            </a>
                         </div>
                         <h2 class="text-xl font-bold text-white">{{ $stats['operasional_harian'] }}</h2>
                         <p class="text-xs text-gray-400 mt-1">23 transaksi lunas</p>
