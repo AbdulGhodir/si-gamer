@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers\Customer;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class CustomerDashboardController extends Controller
 {

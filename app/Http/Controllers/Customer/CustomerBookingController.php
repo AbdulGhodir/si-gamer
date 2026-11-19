@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Customer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
+use App\Models\Membership;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerBookingController extends Controller
 {
@@ -14,12 +16,21 @@ class CustomerBookingController extends Controller
         $deviceId = $request->query('device', $allDevices->first()?->id);
         $selectedUnit = Device::find($deviceId) ?? $allDevices->first();
 
+        $isMember = Membership::where('id_user', Auth::id())
+            ->where('status', 'aktif')
+            ->where(function ($query) {
+                $query->whereNull('tanggal_berakhir')
+                    ->orWhereDate('tanggal_berakhir', '>=', now()->toDateString());
+            })
+            ->exists();
+
         return view('customer.booking', compact(
             'selectedUnit',
             'allDevices',
+            'isMember'
         ));
     }
-    
+
 
     public function riwayat()
     {
