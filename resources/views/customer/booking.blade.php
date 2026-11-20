@@ -18,10 +18,9 @@
         </h1>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
+    <form action="{{ route('customer.booking.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        @csrf
         <div class="lg:col-span-2 bg-[#130B29] border border-[#2D2442] rounded-2xl p-6 md:p-8 flex flex-col gap-6 shadow-xl">
-
             <div class="flex flex-col gap-2">
                 <label for="select-unit" class="text-xs font-semibold text-white tracking-wide">
                     Pilih Unit
@@ -29,11 +28,12 @@
 
                 <div class="relative">
                     <select id="select-unit"
+                            name="device_id"
                             onchange="updateSummary()"
                             class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm appearance-none focus:outline-none focus:border-purple-500 cursor-pointer pr-10">
                         @foreach($allDevices as $dev)
-                            <option value="{{ $dev->nama_device }}" 
-                                    data-harga="{{ $dev->harga_per_jam }}" 
+                            <option value="{{ $dev->id }}"
+                                    data-harga="{{ $dev->harga_per_jam }}"
                                     {{ $selectedUnit && $selectedUnit->nama_device === $dev->nama_device ? 'selected' : '' }}>
                                 {{ $dev->nama_device }} (Rp {{ number_format($dev->harga_per_jam, 0, ',', '.') }}/jam)
                             </option>
@@ -55,10 +55,11 @@
                     </label>
 
                     <input type="date"
+                           name="tanggal"
                            id="input-tanggal"
                            min="{{ date('Y-m-d') }}"
                            value="{{ date('Y-m-d') }}"
-                           class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-purple-500 cursor-pointer">
+                           class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-purple-500 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert">
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -67,9 +68,10 @@
                     </label>
 
                     <input type="time"
+                           name="jam"
                            id="input-jam"
                            value="13:00"
-                           class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-purple-500 cursor-pointer">
+                           class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-purple-500 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert">
                 </div>
 
             </div>
@@ -83,6 +85,7 @@
 
                     <div class="relative">
                         <select id="select-durasi"
+                                name="durasi"
                                 onchange="updateSummary()"
                                 class="w-full bg-[#161124] border border-[#2D2442] text-white rounded-xl px-4 py-3.5 text-sm appearance-none focus:outline-none focus:border-purple-500 cursor-pointer pr-10">
                             <option value="1">1 Jam</option>
@@ -181,19 +184,16 @@
             </div>
 
             <div>
-                <a href="{{ route('customer.riwayat') }}"
-                   class="w-full py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors text-sm shadow-lg shadow-purple-600/25 flex items-center justify-center gap-2 cursor-pointer text-center">
+                <button type="submit" class="w-full py-3.5 bg-purple-600 hover:bg-purple-500 hover:scale-105 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2 cursor-pointer text-center">
                     <span>Bayar dengan QRIS</span>
-                </a>
+                </button>
 
                 <p class="text-xs text-[#8B7EA1] text-center mt-3 font-medium">
                     Diskon membership dihitung otomatis berdasarkan status akun.
                 </p>
             </div>
-
         </div>
-
-    </div>
+    </form>
 </div>
 
 <script>

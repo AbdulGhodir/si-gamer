@@ -15,10 +15,13 @@ class Membership extends Model
         'status',
     ];
 
-    protected $casts = [
-        'tanggal_mulai' => 'date',
-        'tanggal_berakhir' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'tanggal_mulai' => 'date',
+            'tanggal_berakhir' => 'date',
+        ];
+    }
 
     public function user()
     {

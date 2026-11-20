@@ -10,6 +10,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    protected $guarded = ['id'];
+
     protected $fillable = [
         'nama',
         'email',
@@ -31,11 +33,18 @@ class User extends Authenticatable
         ];
     }
 
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'id_user');
+    }
+
+    public function handledBookings()
+    {
+        return $this->hasMany(Booking::class, 'id_staff');
+    }
+
     public function membership()
     {
-        return $this->hasOne(
-            \App\Models\Membership::class,
-            'id_user'
-        );
+        return $this->hasOne(Membership::class, 'id_user');
     }
 }

@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body class="flex w-screen h-screen">
-   
+
     <div class="flex flex-col justify-between bg-linear-to-br from-[#0B0812] via-[#130B29] to-[#2A0845] w-1/2 h-full px-16 pb-10 pt-16">
         <div class="flex items-center gap-3">
             <i class="ph-fill ph-game-controller text-5xl text-purple-500"></i>
@@ -23,7 +23,7 @@
         <div class="flex flex-col gap-2 max-w-lg">
             @yield('left-content')
         </div>
-    
+
         <div class=" flex w-full justify-between gap-4 border-t-2 border-purple-500/30 pt-10">
             <div class="flex flex-col items-center gap-2">
                 <i class="ph ph-clock font-semibold text-2xl text-purple-500"></i>
@@ -40,11 +40,11 @@
                 <p class="text-xs text-white font-semibold">Fasilitas Lengkap</p>
             </div>
         </div>
-    
+
     </div>
 
     <div class="bg-[#0B0812] w-1/2 h-full flex items-center justify-center">
-        <div class="flex flex-col gap-2 w-full p-24">
+        <div class="flex flex-col gap-2 w-full max-h-full px-24">
             @yield('right-content')
         </div>
     </div>

@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Customer;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Device;
 use App\Models\Membership;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerBookingController extends Controller
@@ -31,74 +33,95 @@ class CustomerBookingController extends Controller
         ));
     }
 
+    public function store(Request $request)
+    {
+        $validate = $request->validate([
+            'device_id' => 'required|exists:devices,id',
+            'tanggal' => 'required|date',
+            'jam' => 'required|date_format:H:i',
+            'durasi' => 'required'
+        ]);
+
+        $durasi = (int)$validate['durasi'];
+
+        $user = Auth::user();
+        $membership = Membership::where('id_user', $user->id)->first();
+
+        $device = Device::findOrFail($validate['device_id']);
+        $subTotalHarga = $device->harga_per_jam * $durasi;
+
+        $waktuMulai = Carbon::parse($validate['tanggal'] . ' ' . $validate['jam'] . ':00');
+        $waktuSelesai = $waktuMulai->copy()->addHours($durasi);
+
+        if ($membership && $membership->status === 'aktif') {
+            $totalHarga = $subTotalHarga - ($subTotalHarga * 0.05);
+        } else {
+            $totalHarga = $subTotalHarga;
+        }
+
+        $booking = Booking::create([
+            'kode_booking' => 'BK-' . mt_rand(10000, 99999),
+            'id_user' => $user->id,
+            'id_device' => $device->id,
+            'waktu_mulai' => $waktuMulai,
+            'waktu_selesai' => $waktuSelesai,
+            'durasi' => $durasi,
+            'subtotal' => $subTotalHarga,
+            'total_harga' => $totalHarga,
+            'diskon' => $membership && $membership->status === 'aktif' ? 0.05 : 0,
+            'status' => 'menunggu',
+            'status_konfirmasi' => 'belum_dikonfirmasi',
+            'id_staff' => null,
+            'jenis_booking' => 'online',
+        ]);
+
+        return redirect()->route('customer.riwayat')->with('success', 'Booking berhasil dibuat!');
+    }
 
     public function riwayat()
     {
-        $riwayatList = [
-            [
-                'id' => 1,
-                'nama_device' => 'PlayStation 5 - A',
-                'tipe' => 'PS',
-                'status' => 'menunggu',
-                'jadwal' => 'Hari ini, 12:00 - 16:00',
-                'durasi' => '4 Jam',
-                'kode' => '#BK-99210',
-                'total' => 60000,
-                'customer' => 'Customer',
-                'metode' => 'QRIS',
-            ],
-            [
-                'id' => 2,
-                'nama_device' => 'PC Reguler - 01',
-                'tipe' => 'PC',
-                'status' => 'bermain',
-                'jadwal' => 'Hari ini, 09:00 - 11:00',
-                'durasi' => '2 Jam',
-                'kode' => '#BK-99182',
-                'total' => 14000,
-                'customer' => 'Customer',
-                'metode' => 'QRIS',
-            ],
-            [
-                'id' => 3,
-                'nama_device' => 'PlayStation 4 - B',
-                'tipe' => 'PS',
-                'status' => 'selesai',
-                'jadwal' => '10 Nov 2026, 19:00 - 21:00',
-                'durasi' => '2 Jam',
-                'kode' => '#BK-98001',
-                'total' => 16000,
-                'customer' => 'Customer',
-                'metode' => 'QRIS',
-            ],
-            [
-                'id' => 4,
-                'nama_device' => 'PC Gaming - VIP 01',
-                'tipe' => 'PC',
-                'status' => 'selesai',
-                'jadwal' => '08 Nov 2026, 14:00 - 17:00',
-                'durasi' => '3 Jam',
-                'kode' => '#BK-97882',
-                'total' => 60000,
-                'customer' => 'Customer',
-                'metode' => 'QRIS',
-            ],
-            [
-                'id' => 5,
-                'nama_device' => 'PlayStation 5 - VIP 1',
-                'tipe' => 'PS',
-                'status' => 'menunggu',
-                'jadwal' => 'Besok, 13:00 - 15:00',
-                'durasi' => '2 Jam',
-                'kode' => '#BK-99304',
-                'total' => 50000,
-                'customer' => 'Customer',
-                'metode' => 'QRIS',
-            ],
-        ];
+        $allBookings = Booking::with(['device', 'staff'])
+            ->where('id_user', Auth::id())->latest()
+            ->get();
+
+        $allBookings->transform(function ($booking) {
+            $tanggalMulai = Carbon::parse($booking->waktu_mulai);
+
+            if ($tanggalMulai->isToday()) {
+                $statusHari = 'Hari ini';
+            } elseif ($tanggalMulai->isTomorrow()) {
+                $statusHari = 'Besok';
+            } elseif ($tanggalMulai->isYesterday()) {
+                $statusHari = 'Kemarin';
+            } else {
+                $statusHari = Carbon::parse($booking->waktu_mulai)->format('d M Y');
+            }
+
+            $tangalSelesai = Carbon::parse($booking->waktu_selesai);
+
+            if ($tangalSelesai->isSameDay($tanggalMulai)) {
+                $waktuSelesai = Carbon::parse($booking->waktu_selesai)->format('H:i');
+            } elseif ($tangalSelesai->isToday()) {
+                $waktuSelesai = 'Hari ini ' . Carbon::parse($booking->waktu_selesai)->format('H:i');
+            } elseif ($tangalSelesai->isTomorrow()) {
+                $waktuSelesai = 'Besok, ' . Carbon::parse($booking->waktu_selesai)->format('H:i');
+            } elseif ($tangalSelesai->isYesterday()) {
+                $waktuSelesai = 'Kemarin, ' . Carbon::parse($booking->waktu_selesai)->format('H:i');
+            } else {
+                $waktuSelesai = Carbon::parse($booking->waktu_selesai)->format('d M Y H:i');
+            }
+
+
+            $booking->jadwal = $statusHari . ', ' . Carbon::parse($booking->waktu_mulai)->format(' H:i' ) . ' - ' . $waktuSelesai;
+            $booking->durasi = $booking->durasi . ' Jam';
+            $booking->kode = '#' . $booking->kode_booking;
+            $booking->metode = $booking->jenis_booking === 'online' ? 'QRIS' : 'Bayar di Tempat';
+
+            return $booking;
+        });
 
         return view('customer.riwayat', compact(
-            'riwayatList'
+            'allBookings'
         ));
     }
 }

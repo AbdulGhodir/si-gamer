@@ -23,6 +23,8 @@ return new class extends Migration
             $table->dateTime('waktu_mulai');
             $table->dateTime('waktu_selesai');
             $table->integer('durasi');
+            $table->bigInteger('subtotal');
+            $table->bigInteger('diskon')->default(0);
             $table->bigInteger('total_harga');
 
             $table->enum('status', [

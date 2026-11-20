@@ -39,7 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
 
     Route::get('/customer/booking', [CustomerBookingController::class, 'booking'])->name('customer.booking');
-    Route::post('/customer/booking', [CustomerDashboardController::class, 'storeBooking'])->name('customer.booking.store');
+    Route::post('/customer/booking', [CustomerBookingController::class, 'store'])->name('customer.booking.store');
     Route::get('/customer/riwayat', [CustomerBookingController::class, 'riwayat'])->name('customer.riwayat');
 
     Route::get('/customer/membership', [CustomerProfileController::class, 'membership'])->name('customer.membership');
