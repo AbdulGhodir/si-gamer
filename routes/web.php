@@ -5,14 +5,18 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Customer\CustomerBookingController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\CustomerPaymentController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use App\Http\Controllers\Staff\StaffController;
 
-Route::get('/', [AuthController::class, 'loginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::middleware('guest')->group(function () {
+    Route::get('/', [AuthController::class, 'loginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
-Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+    Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+});
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -42,9 +46,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/customer/booking', [CustomerBookingController::class, 'store'])->name('customer.booking.store');
     Route::get('/customer/riwayat', [CustomerBookingController::class, 'riwayat'])->name('customer.riwayat');
 
+    Route::get('/customer/payment/{payment}/checkout', [CustomerPaymentController::class, 'checkout'])->name('customer.payment.checkout');
+
     Route::get('/customer/membership', [CustomerProfileController::class, 'membership'])->name('customer.membership');
     Route::post('/customer/membership/aktifkan', [CustomerProfileController::class, 'aktifkanMembership'])->name('customer.membership.aktifkan');
 
     Route::get('/customer/profile', [CustomerProfileController::class, 'profile'])->name('customer.profile');
     Route::put('/customer/profile', [CustomerProfileController::class, 'updateProfile'])->name('customer.profile.update');
 });
+
+Route::post('/midtrans/notification', [CustomerPaymentController::class, 'handle'])->name('midtrans.notification');

@@ -89,9 +89,26 @@
 
                 <div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-[#2D2442]">
                     <div class="flex flex-col md:text-right">
-                        <span class="text-xs text-[#8B7EA1] font-medium">Total Pembayaran</span>
+                        <span class="text-xs text-[#8B7EA1] font-medium">
+                            Total Pembayaran -
+                            <span class="font-bold {{ $item->payment->status_pembayaran == 'berhasil' ? 'text-green-400' : 'text-red-400' }}">
+                                @if($item->payment->status_pembayaran == 'menunggu')
+                                    Belum Dibayar
+                                @elseif($item->payment->status_pembayaran == 'berhasil')
+                                    Lunas
+                                @elseif ($item->payment->status_pembayaran == 'gagal')
+                                    Gagal Dibayar
+                                @elseif ($item->payment->status_pembayaran == 'dibatalkan')
+                                    Dibatalkan
+                                @elseif ($item->payment->status_pembayaran == 'kedaluwarsa')
+                                    Kedaluwarsa
+                                @else
+                                    Error
+                                @endif
+                            </span>
+                        </span>
                         <span class="text-xl md:text-2xl font-bold text-white">
-                                        Rp {{ number_format($item->total_harga, 0, ',', '.') }}
+                            Rp {{ number_format($item->total_harga, 0, ',', '.') }}
                         </span>
                     </div>
 
@@ -156,6 +173,11 @@
             </div>
 
             <div class="flex justify-between items-center">
+                <span class="text-[#8B7EA1]">Status Pembayaran</span>
+                <span id="modal-status-pembayaran" class="font-bold uppercase tracking-wider">Belum Dibayar</span>
+            </div>
+
+            <div class="flex justify-between items-center">
                 <span class="text-[#8B7EA1]">Metode Bayar</span>
                 <span id="modal-metode" class="font-bold text-white">QRIS</span>
             </div>
@@ -168,10 +190,15 @@
             <span id="modal-total" class="text-2xl font-black text-purple-400">Total Pembayaran</span>
         </div>
 
-        <div class="w-full py-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 font-bold text-xs flex items-center justify-center gap-2">
+        <div id="modal-payment-message" style="display: none" class="w-full py-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 font-bold text-xs flex items-center justify-center gap-2">
             <i class="ph-fill ph-check-circle text-base"></i>
             <span>Pembayaran Berhasil</span>
         </div>
+
+        <button type="button" id="modal-payment-btn" style="display: none;" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-2">
+            <i class="ph-fill ph-qr-code text-white text-base"></i>
+            <span class="text-white">Bayar Sekarang</span>
+        </button>
 
         <button type="button"
                 onclick="closeReceiptModal()"
@@ -214,14 +241,57 @@
         document.getElementById('modal-metode').textContent = data.metode;
         document.getElementById('modal-total').textContent = 'Rp ' + Number(data.total_harga).toLocaleString('id-ID');
 
-        const statusEl = document.getElementById('modal-status');
-        statusEl.textContent = data.status.toUpperCase();
+        const statusModal = document.getElementById('modal-status');
+        statusModal.textContent = data.status.toUpperCase();
         if (data.status === 'menunggu') {
-            statusEl.className = 'font-bold uppercase tracking-wider text-amber-400';
+            statusModal.className = 'font-bold uppercase tracking-wider text-amber-400';
         } else if (data.status === 'bermain') {
-            statusEl.className = 'font-bold uppercase tracking-wider text-emerald-400';
+            statusModal.className = 'font-bold uppercase tracking-wider text-emerald-400';
         } else if (data.status === 'selesai') {
-            statusEl.className = 'font-bold uppercase tracking-wider text-sky-400';
+            statusModal.className = 'font-bold uppercase tracking-wider text-sky-400';
+        } else if (data.status === 'dibatalkan') {
+            statusModal.className = 'font-bold uppercase tracking-wider text-red-400';
+        }
+
+        const statusPembayaranModal = document.getElementById('modal-status-pembayaran');
+        if (data.payment?.status_pembayaran === 'menunggu') {
+            statusPembayaranModal.textContent = 'Belum Dibayar';
+            statusPembayaranModal.className = 'font-bold tracking-wider text-red-400';
+        } else if (data.payment?.status_pembayaran === 'berhasil') {
+            statusPembayaranModal.textContent = 'Lunas';
+            statusPembayaranModal.className = 'font-bold tracking-wider text-green-400';
+        } else if (data.payment?.status_pembayaran === 'gagal') {
+            statusPembayaranModal.textContent = 'Gagal Dibayar';
+            statusPembayaranModal.className = 'font-bold tracking-wider text-red-400';
+        } else if (data.payment?.status_pembayaran === 'dibatalkan') {
+            statusPembayaranModal.textContent = 'Dibatalkan';
+            statusPembayaranModal.className = 'font-bold tracking-wider text-red-400';
+        } else if (data.payment?.status_pembayaran === 'kedaluwarsa') {
+            statusPembayaranModal.textContent = 'Kedaluwarsa';
+            statusPembayaranModal.className = 'font-bold tracking-wider text-red-400';
+        } else {
+            statusPembayaranModal.textContent = 'Error';
+            statusPembayaranModal.className = 'font-bold tracking-wider text-red-400';
+        }
+
+        const paymentMessage = document.getElementById('modal-payment-message');
+        const paymentBtn = document.getElementById('modal-payment-btn');
+
+        const payment = data.payment
+        const paymentStatus = payment?.status_pembayaran;
+
+        if (paymentStatus === 'menunggu') {
+            paymentMessage.style.display = 'none';
+            paymentBtn.style.display = 'flex';
+            paymentBtn.onclick = function() {
+                window.location.href = '/customer/payment/' + payment.id + '/checkout';
+            };
+        } else if (paymentStatus === 'berhasil') {
+            paymentMessage.style.display = 'flex';
+            paymentBtn.style.display = 'none';
+        } else {
+            paymentMessage.style.display = 'none';
+            paymentBtn.style.display = 'none';
         }
 
         const modal = document.getElementById('receipt-modal');

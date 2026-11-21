@@ -7,8 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Device;
 use App\Models\Membership;
+use App\Models\Payment;
+use App\Services\MidtransService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Midtrans\Snap;
 
 class CustomerBookingController extends Controller
 {
@@ -45,42 +49,89 @@ class CustomerBookingController extends Controller
         $durasi = (int)$validate['durasi'];
 
         $user = Auth::user();
-        $membership = Membership::where('id_user', $user->id)->first();
+        $membership = Membership::where('id_user', $user->id)
+            ->where('status', 'aktif')
+            ->where(function ($query) {
+                $query->whereNull('tanggal_berakhir')
+                    ->orWhereDate('tanggal_berakhir', '>=', today());
+            })
+            ->first();
 
         $device = Device::findOrFail($validate['device_id']);
-        $subTotalHarga = $device->harga_per_jam * $durasi;
+        $subTotalHarga = (int) $device->harga_per_jam * $durasi;
 
         $waktuMulai = Carbon::parse($validate['tanggal'] . ' ' . $validate['jam'] . ':00');
-        $waktuSelesai = $waktuMulai->copy()->addHours($durasi);
 
-        if ($membership && $membership->status === 'aktif') {
-            $totalHarga = $subTotalHarga - ($subTotalHarga * 0.05);
-        } else {
-            $totalHarga = $subTotalHarga;
+        if ($waktuMulai->isPast()) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['error' => 'Waktu mulai tidak boleh di masa lalu.']);
         }
 
-        $booking = Booking::create([
-            'kode_booking' => 'BK-' . mt_rand(10000, 99999),
-            'id_user' => $user->id,
-            'id_device' => $device->id,
-            'waktu_mulai' => $waktuMulai,
-            'waktu_selesai' => $waktuSelesai,
-            'durasi' => $durasi,
-            'subtotal' => $subTotalHarga,
-            'total_harga' => $totalHarga,
-            'diskon' => $membership && $membership->status === 'aktif' ? 0.05 : 0,
-            'status' => 'menunggu',
-            'status_konfirmasi' => 'belum_dikonfirmasi',
-            'id_staff' => null,
-            'jenis_booking' => 'online',
+        $waktuSelesai = $waktuMulai->copy()->addHours($durasi);
+
+        $diskon = $membership ? $subTotalHarga * 0.05 : 0;
+
+        $totalHarga = $subTotalHarga - $diskon;
+
+        $result = DB::transaction(function () use ($user, $device, $waktuMulai, $waktuSelesai, $durasi, $subTotalHarga, $totalHarga, $membership) {
+            $booking = Booking::create([
+                'kode_booking' => 'BK-' . mt_rand(10000, 99999),
+                'id_user' => $user->id,
+                'id_device' => $device->id,
+                'waktu_mulai' => $waktuMulai,
+                'waktu_selesai' => $waktuSelesai,
+                'durasi' => $durasi,
+                'subtotal' => $subTotalHarga,
+                'total_harga' => $totalHarga,
+                'diskon' => $membership && $membership->status === 'aktif' ? 0.05 : 0,
+                'status' => 'menunggu',
+                'status_konfirmasi' => 'belum_dikonfirmasi',
+                'id_staff' => null,
+                'jenis_booking' => 'online',
+            ]);
+
+            $payment = Payment::create([
+                'kode_transaksi' => 'TR-' . $booking->id . mt_rand(10000, 99999),
+                'id_booking' => $booking->id,
+                'metode_pembayaran' => 'qris',
+                'jumlah' => $totalHarga,
+                'status_pembayaran' => 'menunggu',
+            ]);
+
+            return $payment;
+        });
+
+        app(MidtransService::class);
+
+        $snapToken = Snap::getSnapToken([
+            'transaction_details' => [
+                'order_id' => $result->kode_transaksi,
+                'gross_amount' => (int) $result->jumlah,
+            ],
+
+            'customer_details' => [
+                'first_name' => $user->nama,
+                'email' => $user->email,
+            ],
+
+            'enabled_payments' => ['other_qris'],
         ]);
 
-        return redirect()->route('customer.riwayat')->with('success', 'Booking berhasil dibuat!');
+        $result->update([
+            'snap_token' => $snapToken,
+        ]);
+
+
+        return redirect()
+            ->route('customer.payment.checkout', $result->id)
+            ->with('success', 'Booking berhasil dibuat. Silakan lanjutkan ke pembayaran.');
     }
 
     public function riwayat()
     {
-        $allBookings = Booking::with(['device', 'staff'])
+        $allBookings = Booking::with(['device', 'staff', 'payment'])
             ->where('id_user', Auth::id())->latest()
             ->get();
 

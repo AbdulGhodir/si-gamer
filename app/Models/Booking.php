@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
 {
@@ -37,5 +39,10 @@ class Booking extends Model
     public function staff()
     {
         return $this->belongsTo(User::class, 'id_staff');
+    }
+
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class, 'id_booking');
     }
 }

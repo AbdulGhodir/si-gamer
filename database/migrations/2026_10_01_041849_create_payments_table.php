@@ -25,7 +25,7 @@ return new class extends Migration {
                 'menunggu',
                 'berhasil',
                 'gagal',
-                'kadaluarsa',
+                'kedaluwarsa',
                 'dibatalkan'
             ])->default('menunggu');
 

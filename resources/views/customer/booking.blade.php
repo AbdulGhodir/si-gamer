@@ -4,7 +4,7 @@
 @section('title', 'SI Gamer - Booking')
 
 @section('content')
-<div class="flex flex-col gap-6 max-w-6xl mx-auto">
+<div class="flex flex-col gap-4 max-w-6xl mx-auto">
 
     <div class="flex flex-col gap-2">
         <a href="{{ route('customer.dashboard') }}"
@@ -13,9 +13,17 @@
             <span>Kembali ke Katalog</span>
         </a>
 
-        <h1 class="text-3xl font-extrabold text-white tracking-wide mt-1">
+        <h1 class="text-2xl font-extrabold text-white tracking-wide mt-1">
             Booking Jadwal
         </h1>
+
+        @if ($errors->any())
+            <div class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <form action="{{ route('customer.booking.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">

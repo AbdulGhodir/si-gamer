@@ -14,11 +14,14 @@ class Payment extends Model
         'metode_pembayaran',
         'jumlah',
         'status_pembayaran',
+        'snap_token',
+        'waktu_pembayaran',
     ];
 
     protected function casts(): array
     {
         return [
+            'jumlah' => 'integer',
             'waktu_pembayaran' => 'datetime',
         ];
     }
