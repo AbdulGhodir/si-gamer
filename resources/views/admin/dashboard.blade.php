@@ -24,24 +24,15 @@
 
             <div class="px-4 py-6 space-y-1">
                 <p class="px-3 text-[10px] font-semibold tracking-wider text-gray-500 uppercase mb-2">Workspace Admin</p>
-                
+
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-600 text-white font-medium text-sm transition">
                     <span>📊</span> Dashboard
                 </a>
                 <a href="{{ route('admin.users') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-sm transition">
-                    <span>👥</span> Akun pengguna
+                    <span>👥</span> Akun staff
                 </a>
                 <a href="{{ route('admin.devices') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-sm transition">
                     <span>🎮</span> Perangkat
-                </a>
-                <a href="{{ route('admin.tariffs') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-sm transition">
-                    <span>🏷️</span> Tarif & paket
-                </a>
-                <a href="{{ route('admin.promos') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-sm transition">
-                    <span>🎫</span> Promo
-                </a>
-                <a href="{{ route('admin.transactions') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-sm transition">
-                    <span>💳</span> Transaksi
                 </a>
                 <a href="{{ route('admin.bookings') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-sm transition">
                     <span>📅</span> Booking
@@ -67,7 +58,7 @@
             </div>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="text-gray-400 hover:text-red-400 transition p-1" title="Logout">
+                <button type="submit" class="text-gray-400 hover:text-red-400 transition p-1 cursor-pointer" title="Logout">
                     🚪
                 </button>
             </form>
@@ -78,36 +69,36 @@
         <header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold text-white tracking-tight">Ringkasan bisnis</h1>
-                <p class="text-xs text-gray-400 mt-0.5">Kinerja rental dan operasional GameHub Depok, dalam satu tempat.</p>
+                <p class="text-xs text-gray-400 mt-0.5">Kinerja rental dan operasional GameHub, dalam satu tempat.</p>
             </div>
             <div>
-                <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2">
+                <a href="{{ route('admin.reports') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2">
                     <span>📥</span> Unduh laporan
-                </button>
+                </a>
             </div>
         </header>
 
         <div class="p-6 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
-                    <p class="text-xs text-gray-400">Pendapatan - 1-18 Okt</p>
-                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['pendapatan'] }}</h2>
-                    <p class="text-xs text-emerald-400 mt-2 font-medium">↑ 12,8% vs 1-18 Sep</p>
+                    <p class="text-xs text-gray-400">Total pendapatan lunas</p>
+                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['pendapatan'] ?? 'Rp0' }}</h2>
+                    <p class="text-xs text-emerald-400 mt-2 font-medium">Data live database</p>
                 </div>
                 <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
-                    <p class="text-xs text-gray-400">Transaksi lunas - 1-18 Okt</p>
-                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['transaksi_lunas'] }}</h2>
-                    <p class="text-xs text-emerald-400 mt-2 font-medium">↑ 28 vs 1-18 Sep</p>
+                    <p class="text-xs text-gray-400">Booking lunas</p>
+                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['transaksi_lunas'] ?? 0 }}</h2>
+                    <p class="text-xs text-emerald-400 mt-2 font-medium">Tercatat terbayar</p>
                 </div>
                 <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
                     <p class="text-xs text-gray-400">Booking hari ini</p>
-                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['booking_hari_ini'] }}</h2>
-                    <p class="text-xs text-gray-400 mt-2">23 lunas · 1 belum</p>
+                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['booking_hari_ini'] ?? 0 }}</h2>
+                    <p class="text-xs text-gray-400 mt-2">{{ $stats['booking_hari_ini_sub'] ?? '0 lunas · 0 belum' }}</p>
                 </div>
                 <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
-                    <p class="text-xs text-gray-400">Utilisasi hari ini</p>
-                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['utilitas'] }}</h2>
-                    <p class="text-xs text-gray-400 mt-2">5 sesi aktif</p>
+                    <p class="text-xs text-gray-400">Utilisasi perangkat</p>
+                    <h2 class="text-2xl font-bold text-white mt-1">{{ $stats['utilitas'] ?? '0%' }}</h2>
+                    <p class="text-xs text-gray-400 mt-2">{{ $stats['sesi_aktif_sub'] ?? '0 sesi aktif' }}</p>
                 </div>
             </div>
 
@@ -115,7 +106,7 @@
                 <div class="lg:col-span-2 bg-[#141221] border border-gray-800/80 p-5 rounded-2xl">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-semibold text-white">Utilisasi perangkat</h3>
-                        <span class="text-xs text-gray-400">Rerata 68% · 7 hari terakhir</span>
+                        <span class="text-xs text-gray-400">Saat ini {{ $stats['utilitas'] ?? '0%' }}</span>
                     </div>
                     <div class="h-48 flex items-center justify-center border border-dashed border-gray-800 rounded-xl text-gray-500 text-sm">
                         [ Area Grafik Batang Perangkat ]
@@ -130,12 +121,17 @@
                                 Detail →
                             </a>
                         </div>
-                        <h2 class="text-xl font-bold text-white">{{ $stats['operasional_harian'] }}</h2>
-                        <p class="text-xs text-gray-400 mt-1">23 transaksi lunas</p>
+                        <h2 class="text-xl font-bold text-white">{{ $stats['operasional_harian'] ?? 'Rp0' }}</h2>
+                        <p class="text-xs text-gray-400 mt-1">{{ $stats['operasional_sub'] ?? '0 booking lunas' }}</p>
                     </div>
                     <div class="bg-[#1b182e] p-3 rounded-xl border border-gray-800 text-xs text-gray-300 mt-4">
-                        <p class="font-semibold text-white mb-1">🎮 PS5-04 · DualSense drift</p>
-                        <p class="text-gray-400">MT-026 ditangani sejak 11.20</p>
+                        @if($activeMaintenance)
+                            <p class="font-semibold text-white mb-1">🛠️ {{ $activeMaintenance->device?->nama_device ?? 'Perangkat' }}</p>
+                            <p class="text-gray-400">{{ $activeMaintenance->keterangan }}</p>
+                        @else
+                            <p class="font-semibold text-white mb-1">✅ Tidak ada maintenance aktif</p>
+                            <p class="text-gray-400">Semua unit dalam kondisi normal</p>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -24,24 +24,15 @@
 
             <div class="px-4 py-6 space-y-1">
                 <p class="px-3 text-[10px] font-semibold tracking-wider text-gray-500 uppercase mb-2">Workspace Admin</p>
-                
+
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
                     <span>📊</span> Dashboard
                 </a>
                 <a href="{{ route('admin.users') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.users') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
-                    <span>👥</span> Akun pengguna
+                    <span>👥</span> Akun staff
                 </a>
                 <a href="{{ route('admin.devices') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.devices') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
                     <span>🎮</span> Perangkat
-                </a>
-                <a href="{{ route('admin.tariffs') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.tariffs') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
-                    <span>🏷️</span> Tarif & paket
-                </a>
-                <a href="{{ route('admin.promos') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.promos') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
-                    <span>🎫</span> Promo
-                </a>
-                <a href="{{ route('admin.transactions') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.transactions') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
-                    <span>💳</span> Transaksi
                 </a>
                 <a href="{{ route('admin.bookings') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl {{ request()->routeIs('admin.bookings') ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:bg-white/5 hover:text-white' }} text-sm transition">
                     <span>📅</span> Booking

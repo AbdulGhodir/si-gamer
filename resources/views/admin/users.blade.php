@@ -1,14 +1,18 @@
 @extends('layouts.admin')
 
 @section('content')
+@php
+    $staffList = collect($users ?? []);
+@endphp
+
 <header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
     <div>
-        <h1 class="text-2xl font-bold text-white tracking-tight">Manajemen Akun Pengguna</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Kelola data pelanggan, staff, dan verifikasi akun dalam sistem.</p>
+        <h1 class="text-2xl font-bold text-white tracking-tight">Manajemen Akun Staff</h1>
+        <p class="text-xs text-gray-400 mt-0.5">Kelola akun staff operasional rental; akun pelanggan mendaftar secara mandiri.</p>
     </div>
     <div>
         <button type="button" id="btnOpenTambahUser" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2 cursor-pointer">
-            <span>➕</span> Tambah Pengguna
+            <span>➕</span> Tambah Staff
         </button>
     </div>
 </header>
@@ -20,10 +24,20 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="bg-rose-950/60 border border-rose-700/60 text-rose-300 px-4 py-3 rounded-xl text-sm">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-            <h3 class="font-semibold text-white">Daftar Pengguna Terdaftar</h3>
-            <input type="text" id="searchUserInput" placeholder="Cari pengguna..." class="bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-300 placeholder-gray-500 focus:outline-none focus:border-purple-600 w-full sm:w-64">
+            <h3 class="font-semibold text-white">Daftar Akun Staff</h3>
+            <input type="text" id="searchUserInput" placeholder="Cari nama atau email staff..." class="bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-300 placeholder-gray-500 focus:outline-none focus:border-purple-600 w-full sm:w-64">
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="usersTable">
@@ -37,29 +51,50 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-800/60 text-sm" id="usersTableBody">
-                    @foreach($users as $u)
-                    <tr class="user-row hover:bg-white/[0.02] transition">
-                        <td class="p-4 font-medium text-white col-nama">{{ $u['nama'] }}</td>
-                        <td class="p-4 text-gray-400 text-xs col-email">{{ $u['email'] }}</td>
+                    @forelse($staffList as $u)
+                    @php
+                        $staffId = $u['id'] ?? null;
+                        $nama = $u['nama'] ?? '-';
+                        $email = $u['email'] ?? '-';
+                        $status = $u['status'] ?? 'Aktif';
+                    @endphp
+                    <tr class="user-row hover:bg-white/[0.02] transition"
+                        data-id="{{ $staffId }}"
+                        data-nama="{{ $nama }}"
+                        data-email="{{ $email }}">
+                        <td class="p-4 font-medium text-white">{{ $nama }}</td>
+                        <td class="p-4 text-gray-400 text-xs">{{ $email }}</td>
                         <td class="p-4">
-                            <span class="col-role px-2.5 py-1 rounded-full text-xs font-medium {{ $u['role'] == 'Admin' ? 'bg-purple-900/50 text-purple-300 border border-purple-700/50' : ($u['role'] == 'Staff' ? 'bg-blue-900/50 text-blue-300 border border-blue-700/50' : 'bg-gray-800 text-gray-300') }}">
-                                {{ $u['role'] }}
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700/50">
+                                Staff
                             </span>
                         </td>
                         <td class="p-4">
-                            <span class="col-status px-2.5 py-1 rounded-full text-xs font-medium {{ $u['status'] == 'Aktif' ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}">
-                                {{ $u['status'] }}
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300">
+                                {{ $status }}
                             </span>
                         </td>
-                        <td class="p-4 text-center space-x-2">
-                            <button type="button" class="btn-edit-user text-xs text-purple-400 hover:text-purple-300 cursor-pointer">Edit</button>
-                            <button type="button" class="btn-hapus-user text-xs text-red-400 hover:text-red-300 cursor-pointer">Hapus</button>
+                        <td class="p-4 text-center whitespace-nowrap space-x-2">
+                            @if($staffId)
+                                <button type="button" class="btn-edit-user text-xs text-purple-400 hover:text-purple-300 cursor-pointer">Edit</button>
+                                <form action="{{ route('admin.users.destroy', $staffId) }}" method="POST" class="inline" onsubmit="return confirm('Hapus akun staff {{ $nama }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 cursor-pointer">Hapus</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr id="emptyInitialRow">
+                        <td colspan="5" class="p-6 text-center text-xs text-gray-500">
+                            Belum ada akun staff di database.
+                        </td>
+                    </tr>
+                    @endforelse
                     <tr id="emptySearchRow" class="hidden">
                         <td colspan="5" class="p-6 text-center text-xs text-gray-500">
-                            Pengguna tidak ditemukan.
+                            Data staff tidak ditemukan.
                         </td>
                     </tr>
                 </tbody>
@@ -68,47 +103,40 @@
     </div>
 </div>
 
-<!-- Modal Tambah / Edit Pengguna -->
+<!-- Modal Tambah / Edit Staff -->
 <div id="modalUser" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-xs p-4">
     <div class="bg-[#141221] border border-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl">
         <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
-            <h3 id="modalUserTitle" class="font-semibold text-white text-base">Tambah Pengguna Baru</h3>
+            <h3 id="modalUserTitle" class="font-semibold text-white text-base">Tambah Akun Staff</h3>
             <button type="button" id="btnCloseModalUser" class="text-gray-400 hover:text-white text-lg leading-none cursor-pointer">&times;</button>
         </div>
 
-        <form id="formUser" action="#" method="POST" class="space-y-4">
+        <form id="formUser" action="{{ route('admin.users.store') }}" method="POST" class="space-y-4">
             @csrf
+            <input type="hidden" name="_method" id="formUserMethod" value="POST">
+
             <div>
                 <label class="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
-                <input type="text" name="nama" id="inputNamaUser" required placeholder="Contoh: Budi Santoso"
+                <input type="text" name="nama" id="inputNamaUser" required placeholder="Contoh: Dina Putri"
                     class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
             </div>
 
             <div>
                 <label class="block text-xs text-gray-400 mb-1">Email</label>
-                <input type="email" name="email" id="inputEmailUser" required placeholder="budi@gmail.com"
+                <input type="email" name="email" id="inputEmailUser" required placeholder="dina@gmail.com"
                     class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Role</label>
-                    <select name="role" id="inputRoleUser"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                        <option value="Customer">Customer</option>
-                        <option value="Staff">Staff</option>
-                        <option value="Admin">Admin</option>
-                    </select>
-                </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1" id="labelPasswordUser">Password (Minimal 6 karakter)</label>
+                <input type="password" name="password" id="inputPasswordUser" required minlength="6" placeholder="Minimal 6 karakter"
+                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+            </div>
 
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Status</label>
-                    <select name="status" id="inputStatusUser"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                        <option value="Aktif">Aktif</option>
-                        <option value="Pending">Pending</option>
-                    </select>
-                </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Role</label>
+                <input type="text" id="inputRoleUser" value="Staff" readonly
+                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-gray-400 focus:outline-none">
             </div>
 
             <div class="flex justify-end gap-2 pt-3 border-t border-gray-800">
@@ -125,6 +153,9 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const storeUrl = "{{ route('admin.users.store') }}";
+    const updateUrlTemplate = "{{ route('admin.users.update', ['id' => '__ID__']) }}";
+
     const searchInput = document.getElementById('searchUserInput');
     const emptyRow = document.getElementById('emptySearchRow');
     const tbody = document.getElementById('usersTableBody');
@@ -135,31 +166,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnClose = document.getElementById('btnCloseModalUser');
     const btnCancel = document.getElementById('btnBatalModalUser');
     const form = document.getElementById('formUser');
+    const methodInput = document.getElementById('formUserMethod');
 
     const inputNama = document.getElementById('inputNamaUser');
     const inputEmail = document.getElementById('inputEmailUser');
-    const inputRole = document.getElementById('inputRoleUser');
-    const inputStatus = document.getElementById('inputStatusUser');
-
-    let editingRow = null;
-
-    function getRoleBadgeClass(role) {
-        if (role === 'Admin') {
-            return 'col-role px-2.5 py-1 rounded-full text-xs font-medium bg-purple-900/50 text-purple-300 border border-purple-700/50';
-        }
-        if (role === 'Staff') {
-            return 'col-role px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700/50';
-        }
-        return 'col-role px-2.5 py-1 rounded-full text-xs font-medium bg-gray-800 text-gray-300';
-    }
-
-    function getStatusBadgeClass(status) {
-        return status === 'Aktif'
-            ? 'col-status px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300'
-            : 'col-status px-2.5 py-1 rounded-full text-xs font-medium bg-amber-900/50 text-amber-300';
-    }
+    const inputPassword = document.getElementById('inputPasswordUser');
+    const labelPassword = document.getElementById('labelPasswordUser');
 
     function filterUsers() {
+        if (!searchInput || !emptyRow) return;
         const keyword = searchInput.value.toLowerCase().trim();
         const rows = document.querySelectorAll('#usersTableBody .user-row');
         let visibleCount = 0;
@@ -170,29 +185,37 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isMatch) visibleCount++;
         });
 
-        emptyRow.classList.toggle('hidden', visibleCount > 0);
+        emptyRow.classList.toggle('hidden', rows.length > 0 && visibleCount === 0);
     }
 
-    searchInput.addEventListener('input', filterUsers);
+    searchInput?.addEventListener('input', filterUsers);
 
     function openTambahModal() {
-        editingRow = null;
         form.reset();
-        inputRole.value = 'Customer';
-        inputStatus.value = 'Aktif';
-        modalTitle.textContent = 'Tambah Pengguna Baru';
+        form.action = storeUrl;
+        methodInput.value = 'POST';
+        inputPassword.required = true;
+        labelPassword.textContent = 'Password (Minimal 6 karakter)';
+        modalTitle.textContent = 'Tambah Akun Staff';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         inputNama.focus();
     }
 
     function openEditModal(row) {
-        editingRow = row;
-        inputNama.value = row.querySelector('.col-nama').textContent.trim();
-        inputEmail.value = row.querySelector('.col-email').textContent.trim();
-        inputRole.value = row.querySelector('.col-role').textContent.trim();
-        inputStatus.value = row.querySelector('.col-status').textContent.trim();
-        modalTitle.textContent = 'Edit Pengguna';
+        const id = row.dataset.id;
+        if (!id) return;
+
+        form.reset();
+        form.action = updateUrlTemplate.replace('__ID__', id);
+        methodInput.value = 'PUT';
+
+        inputNama.value = row.dataset.nama || '';
+        inputEmail.value = row.dataset.email || '';
+        inputPassword.required = false;
+        labelPassword.textContent = 'Password Baru (Kosongkan jika tidak diubah)';
+
+        modalTitle.textContent = 'Edit Akun Staff';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         inputNama.focus();
@@ -201,76 +224,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function closeModal() {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        form.reset();
-        editingRow = null;
+        form?.reset();
     }
 
-    btnOpenTambah.addEventListener('click', openTambahModal);
-    btnClose.addEventListener('click', closeModal);
-    btnCancel.addEventListener('click', closeModal);
+    btnOpenTambah?.addEventListener('click', openTambahModal);
+    btnClose?.addEventListener('click', closeModal);
+    btnCancel?.addEventListener('click', closeModal);
 
-    modal.addEventListener('click', function (e) {
+    modal?.addEventListener('click', function (e) {
         if (e.target === modal) closeModal();
     });
 
-    tbody.addEventListener('click', function (e) {
-        const row = e.target.closest('.user-row');
-        if (!row) return;
-
-        if (e.target.classList.contains('btn-edit-user')) {
-            openEditModal(row);
-        } else if (e.target.classList.contains('btn-hapus-user')) {
-            const nama = row.querySelector('.col-nama').textContent.trim();
-            if (confirm(`Hapus pengguna "${nama}"?`)) {
-                row.remove();
-                filterUsers();
-            }
-        }
-    });
-
-    form.addEventListener('submit', function (e) {
-        if (form.getAttribute('action') === '#') {
-            e.preventDefault();
-            const nama = inputNama.value.trim();
-            const email = inputEmail.value.trim();
-            const role = inputRole.value;
-            const status = inputStatus.value;
-
-            if (editingRow) {
-                editingRow.querySelector('.col-nama').textContent = nama;
-                editingRow.querySelector('.col-email').textContent = email;
-
-                const roleBadge = editingRow.querySelector('.col-role');
-                roleBadge.className = getRoleBadgeClass(role);
-                roleBadge.textContent = role;
-
-                const statusBadge = editingRow.querySelector('.col-status');
-                statusBadge.className = getStatusBadgeClass(status);
-                statusBadge.textContent = status;
-            } else {
-                const tr = document.createElement('tr');
-                tr.className = 'user-row hover:bg-white/[0.02] transition';
-                tr.innerHTML = `
-                    <td class="p-4 font-medium text-white col-nama"></td>
-                    <td class="p-4 text-gray-400 text-xs col-email"></td>
-                    <td class="p-4"><span class="${getRoleBadgeClass(role)}"></span></td>
-                    <td class="p-4"><span class="${getStatusBadgeClass(status)}"></span></td>
-                    <td class="p-4 text-center space-x-2">
-                        <button type="button" class="btn-edit-user text-xs text-purple-400 hover:text-purple-300 cursor-pointer">Edit</button>
-                        <button type="button" class="btn-hapus-user text-xs text-red-400 hover:text-red-300 cursor-pointer">Hapus</button>
-                    </td>
-                `;
-                tr.querySelector('.col-nama').textContent = nama;
-                tr.querySelector('.col-email').textContent = email;
-                tr.querySelector('.col-role').textContent = role;
-                tr.querySelector('.col-status').textContent = status;
-
-                tbody.insertBefore(tr, emptyRow);
-            }
-
-            closeModal();
-            filterUsers();
-        }
+    tbody?.addEventListener('click', function (e) {
+        const btnEdit = e.target.closest('.btn-edit-user');
+        if (!btnEdit) return;
+        const row = btnEdit.closest('.user-row');
+        if (row) openEditModal(row);
     });
 });
 </script>

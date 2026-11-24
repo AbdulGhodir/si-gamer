@@ -6,10 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Device extends Model
 {
-    protected $guarded = ['id'];
-
     protected $fillable = [
-        'nama',
+        'nama_device',
         'tipe',
         'harga_per_jam',
         'status',

@@ -1,10 +1,21 @@
 @extends('layouts.admin')
 
 @section('content')
+@php
+    $summary = $reportSummary ?? [
+        'pendapatan' => 'Rp0',
+        'sesi_lunas' => '0 Sesi Lunas',
+        'operasional_harian' => 'Rp0',
+        'utilisasi' => '0%',
+        'sesi_aktif' => '0 sesi aktif',
+    ];
+    $breakdownRows = collect($breakdown ?? []);
+@endphp
+
 <header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
     <div>
         <h1 class="text-2xl font-bold text-white tracking-tight">Laporan Operasional</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Rekapitulasi performa dan unduh laporan bulanan.</p>
+        <p class="text-xs text-gray-400 mt-0.5">Rekapitulasi pendapatan, jumlah sesi, dan performa operasional GameHub.</p>
     </div>
 </header>
 
@@ -12,19 +23,19 @@
     <!-- Card Ringkasan Kinerja -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
-            <p class="text-xs text-gray-400">Total Pendapatan (1-18 Okt)</p>
-            <h2 class="text-2xl font-bold text-white mt-1">Rp18.450.000</h2>
-            <p class="text-xs text-emerald-400 mt-2 font-medium">↑ 12,8% vs periode lalu</p>
+            <p class="text-xs text-gray-400">Total Pendapatan Lunas</p>
+            <h2 class="text-2xl font-bold text-white mt-1">{{ $summary['pendapatan'] }}</h2>
+            <p class="text-xs text-emerald-400 mt-2 font-medium">Berdasarkan booking lunas</p>
         </div>
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
-            <p class="text-xs text-gray-400">Transaksi Lunas</p>
-            <h2 class="text-2xl font-bold text-purple-400 mt-1">326 Transaksi</h2>
-            <p class="text-xs text-gray-400 mt-2">Operasional harian: Rp875.000</p>
+            <p class="text-xs text-gray-400">Booking Lunas</p>
+            <h2 class="text-2xl font-bold text-purple-400 mt-1">{{ $summary['sesi_lunas'] }}</h2>
+            <p class="text-xs text-gray-400 mt-2">Operasional hari ini: {{ $summary['operasional_harian'] }}</p>
         </div>
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
-            <p class="text-xs text-gray-400">Rerata Utilisasi Perangkat</p>
-            <h2 class="text-2xl font-bold text-emerald-400 mt-1">68%</h2>
-            <p class="text-xs text-gray-400 mt-2">Hari ini: 62% (5 sesi aktif)</p>
+            <p class="text-xs text-gray-400">Utilisasi Perangkat</p>
+            <h2 class="text-2xl font-bold text-emerald-400 mt-1">{{ $summary['utilisasi'] }}</h2>
+            <p class="text-xs text-gray-400 mt-2">Status saat ini: {{ $summary['sesi_aktif'] }}</p>
         </div>
     </div>
 
@@ -33,14 +44,14 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="space-y-1">
                 <h3 class="font-semibold text-white">Unduh Rekap Laporan</h3>
-                <p class="text-gray-400 text-sm">Data kinerja rental dan operasional GameHub Depok siap diunduh dalam bentuk dokumen.</p>
+                <p class="text-gray-400 text-sm">Data pendapatan, jumlah sesi, dan operasional GameHub siap diunduh dalam bentuk dokumen.</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
                 <select id="selectPeriodeLaporan" class="bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-purple-600">
-                    <option value="Oktober_2026">Oktober 2026 (1-18 Okt)</option>
-                    <option value="Harian_26_Okt_2026">Harian (Hari Ini)</option>
-                    <option value="September_2026">September 2026</option>
+                    <option value="Rekap_Terkini">Rekap Terkini</option>
+                    <option value="Harian_{{ now()->format('d_M_Y') }}">Harian ({{ now()->format('d/m/Y') }})</option>
+                    <option value="Bulanan_{{ now()->format('M_Y') }}">Bulanan ({{ now()->format('M Y') }})</option>
                 </select>
 
                 <button type="button" id="btnDownloadCsv" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2 cursor-pointer">
@@ -60,7 +71,7 @@
     <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex justify-between items-center">
             <h3 class="font-semibold text-white">Pratinjau Rekap Operasional Per Kategori</h3>
-            <span class="text-xs text-gray-400">GameHub Depok</span>
+            <span class="text-xs text-gray-400">GameHub</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="reportTable">
@@ -74,27 +85,25 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-800/60 text-sm">
+                    @forelse($breakdownRows as $row)
                     <tr class="hover:bg-white/[0.02] transition">
-                        <td class="p-4 font-medium text-white">PlayStation 5</td>
-                        <td class="p-4 text-gray-300">154 Sesi</td>
-                        <td class="p-4 text-gray-400 text-xs">74%</td>
-                        <td class="p-4 text-purple-400 font-semibold">Rp9.850.000</td>
-                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300">Optimal</span></td>
+                        <td class="p-4 font-medium text-white">{{ $row['kategori'] ?? '-' }}</td>
+                        <td class="p-4 text-gray-300">{{ $row['sesi'] ?? '0 Sesi' }}</td>
+                        <td class="p-4 text-gray-400 text-xs">{{ $row['utilisasi'] ?? '0%' }}</td>
+                        <td class="p-4 text-purple-400 font-semibold">{{ $row['pendapatan'] ?? 'Rp0' }}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300">
+                                {{ $row['status'] ?? 'Stabil' }}
+                            </span>
+                        </td>
                     </tr>
-                    <tr class="hover:bg-white/[0.02] transition">
-                        <td class="p-4 font-medium text-white">PlayStation 4</td>
-                        <td class="p-4 text-gray-300">102 Sesi</td>
-                        <td class="p-4 text-gray-400 text-xs">63%</td>
-                        <td class="p-4 text-purple-400 font-semibold">Rp4.900.000</td>
-                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300">Stabil</span></td>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="p-6 text-center text-xs text-gray-500">
+                            Belum ada data rekap kategori.
+                        </td>
                     </tr>
-                    <tr class="hover:bg-white/[0.02] transition">
-                        <td class="p-4 font-medium text-white">PC Gaming</td>
-                        <td class="p-4 text-gray-300">70 Sesi</td>
-                        <td class="p-4 text-gray-400 text-xs">67%</td>
-                        <td class="p-4 text-purple-400 font-semibold">Rp3.700.000</td>
-                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300">Stabil</span></td>
-                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -108,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectPeriode = document.getElementById('selectPeriodeLaporan');
     const feedback = document.getElementById('downloadFeedback');
 
-    btnDownloadCsv.addEventListener('click', function () {
+    btnDownloadCsv?.addEventListener('click', function () {
         const table = document.getElementById('reportTable');
         const rows = Array.from(table.querySelectorAll('tr'));
         const csvContent = rows.map(row => {
@@ -131,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
         feedback.classList.remove('hidden');
     });
 
-    btnPrintPdf.addEventListener('click', function () {
+    btnPrintPdf?.addEventListener('click', function () {
         window.print();
     });
 });

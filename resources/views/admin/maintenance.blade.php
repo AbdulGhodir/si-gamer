@@ -2,9 +2,11 @@
 
 @section('content')
 @php
-    $totalTiket = count($maintenances);
-    $dalamPenangananCount = collect($maintenances)->where('status', '!=', 'Selesai')->count();
-    $selesaiCount = collect($maintenances)->where('status', 'Selesai')->count();
+    $maintenanceList = collect($maintenances ?? []);
+    $deviceList = collect($devices ?? []);
+    $totalTiket = $maintenanceList->count();
+    $dalamPenangananCount = $maintenanceList->where('status', '!=', 'Selesai')->count();
+    $selesaiCount = $maintenanceList->where('status', 'Selesai')->count();
 @endphp
 
 <header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
@@ -26,21 +28,31 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="bg-rose-950/60 border border-rose-700/60 text-rose-300 px-4 py-3 rounded-xl text-sm">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Card Ringkasan Maintenance -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
             <p class="text-xs text-gray-400">Total Tiket Maintenance</p>
-            <h2 id="cardTotalTiket" class="text-2xl font-bold text-white mt-1">{{ $totalTiket }}</h2>
+            <h2 class="text-2xl font-bold text-white mt-1">{{ $totalTiket }}</h2>
             <p class="text-xs text-gray-400 mt-2">Tercatat pada sistem</p>
         </div>
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
             <p class="text-xs text-gray-400">Dalam Penanganan</p>
-            <h2 id="cardDalamPenanganan" class="text-2xl font-bold text-amber-400 mt-1">{{ $dalamPenangananCount }}</h2>
-            <p class="text-xs text-gray-400 mt-2">Sedang diperbaiki petugas</p>
+            <h2 class="text-2xl font-bold text-amber-400 mt-1">{{ $dalamPenangananCount }}</h2>
+            <p class="text-xs text-gray-400 mt-2">Sedang diperbaiki</p>
         </div>
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
             <p class="text-xs text-gray-400">Selesai</p>
-            <h2 id="cardSelesaiMaintenance" class="text-2xl font-bold text-emerald-400 mt-1">{{ $selesaiCount }}</h2>
+            <h2 class="text-2xl font-bold text-emerald-400 mt-1">{{ $selesaiCount }}</h2>
             <p class="text-xs text-gray-400 mt-2">Siap digunakan kembali</p>
         </div>
     </div>
@@ -48,7 +60,7 @@
     <!-- Tabel Tiket Perbaikan -->
     <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex justify-between items-center">
-            <h3 class="font-semibold text-white">Tiket Perbaikan Aktif</h3>
+            <h3 class="font-semibold text-white">Tiket Perbaikan</h3>
             <span class="text-xs text-gray-400">Klik badge status untuk mengubah</span>
         </div>
         <div class="overflow-x-auto">
@@ -57,26 +69,46 @@
                     <tr class="border-b border-gray-800 text-xs text-gray-400 bg-[#110f1c]">
                         <th class="p-4">Tiket</th>
                         <th class="p-4">Unit Perangkat</th>
-                        <th class="p-4">Masalah</th>
-                        <th class="p-4">Petugas</th>
+                        <th class="p-4">Masalah / Keterangan</th>
+                        <th class="p-4">Waktu Mulai</th>
                         <th class="p-4">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-800/60 text-sm" id="maintenanceTableBody">
-                    @foreach($maintenances as $m)
-                    @php $isSelesai = ($m['status'] ?? '') === 'Selesai'; @endphp
-                    <tr class="maintenance-row hover:bg-white/[0.02] transition" data-status="{{ $m['status'] }}">
-                        <td class="p-4 font-medium text-white">{{ $m['ticket'] }}</td>
-                        <td class="p-4 text-purple-400">{{ $m['unit'] }}</td>
-                        <td class="p-4 text-gray-300">{{ $m['masalah'] }}</td>
-                        <td class="p-4 text-gray-400 text-xs">{{ $m['petugas'] }}</td>
+                    @forelse($maintenanceList as $m)
+                    @php
+                        $modelId = $m['model_id'] ?? null;
+                        $statusMaintenance = $m['status'] ?? 'Dalam Penanganan';
+                        $isSelesai = $statusMaintenance === 'Selesai';
+                    @endphp
+                    <tr class="maintenance-row hover:bg-white/[0.02] transition">
+                        <td class="p-4 font-medium text-white">{{ $m['ticket'] ?? '-' }}</td>
+                        <td class="p-4 text-purple-400">{{ $m['unit'] ?? '-' }}</td>
+                        <td class="p-4 text-gray-300">{{ $m['masalah'] ?? '-' }}</td>
+                        <td class="p-4 text-gray-400 text-xs">{{ $m['waktu'] ?? '-' }}</td>
                         <td class="p-4">
-                            <button type="button" class="btn-toggle-status px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isSelesai ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}" title="Klik untuk ubah status">
-                                {{ $m['status'] }}
-                            </button>
+                            @if($modelId)
+                                <form action="{{ route('admin.maintenance.toggle', $modelId) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isSelesai ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}" title="Klik untuk ubah status">
+                                        {{ $statusMaintenance }}
+                                    </button>
+                                </form>
+                            @else
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $isSelesai ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}">
+                                    {{ $statusMaintenance }}
+                                </span>
+                            @endif
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="5" class="p-6 text-center text-xs text-gray-500">
+                            Belum ada tiket maintenance di database.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -91,32 +123,29 @@
             <button type="button" id="btnCloseTambahMaintenance" class="text-gray-400 hover:text-white text-lg leading-none cursor-pointer">&times;</button>
         </div>
 
-        <form id="formTambahMaintenance" action="#" method="POST" class="space-y-4">
+        <form id="formTambahMaintenance" action="{{ route('admin.maintenance.store') }}" method="POST" class="space-y-4">
             @csrf
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">No. Tiket</label>
-                    <input type="text" name="ticket" id="inputTicket" required placeholder="Contoh: MT-027"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                </div>
-
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Unit Perangkat</label>
-                    <input type="text" name="unit" id="inputUnit" required placeholder="Contoh: PS5-02"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Unit Perangkat</label>
+                <select name="id_device" id="inputDeviceMaintenance" required
+                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+                    @foreach($deviceList as $dev)
+                        <option value="{{ $dev->id }}">{{ $dev->nama_device }} · {{ $dev->tipe }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div>
-                <label class="block text-xs text-gray-400 mb-1">Masalah / Kendala</label>
-                <input type="text" name="masalah" id="inputMasalah" required placeholder="Contoh: Port HDMI longgar"
+                <label class="block text-xs text-gray-400 mb-1">Masalah / Keterangan</label>
+                <input type="text" name="keterangan" id="inputKeteranganMaintenance" required placeholder="Contoh: DualSense drift / Port HDMI longgar"
                     class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">Petugas</label>
-                    <input type="text" name="petugas" id="inputPetugas" required placeholder="Contoh: Dina Putri"
+                    <label class="block text-xs text-gray-400 mb-1">Waktu Mulai</label>
+                    <input type="datetime-local" name="waktu_mulai" id="inputWaktuMulaiMaintenance"
+                        value="{{ now()->format('Y-m-d\TH:i') }}"
                         class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
                 </div>
 
@@ -149,97 +178,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnClose = document.getElementById('btnCloseTambahMaintenance');
     const btnCancel = document.getElementById('btnBatalTambahMaintenance');
     const form = document.getElementById('formTambahMaintenance');
-    const tbody = document.getElementById('maintenanceTableBody');
-
-    function getStatusBadgeClass(status) {
-        return status === 'Selesai'
-            ? 'btn-toggle-status px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition bg-emerald-900/50 text-emerald-300'
-            : 'btn-toggle-status px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition bg-amber-900/50 text-amber-300';
-    }
-
-    function updateSummaryCards() {
-        const rows = document.querySelectorAll('#maintenanceTableBody .maintenance-row');
-        let total = rows.length;
-        let selesai = 0;
-        let dalamPenanganan = 0;
-
-        rows.forEach((row) => {
-            if (row.dataset.status === 'Selesai') {
-                selesai++;
-            } else {
-                dalamPenanganan++;
-            }
-        });
-
-        document.getElementById('cardTotalTiket').textContent = total;
-        document.getElementById('cardDalamPenanganan').textContent = dalamPenanganan;
-        document.getElementById('cardSelesaiMaintenance').textContent = selesai;
-    }
 
     function openModal() {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        document.getElementById('inputTicket').focus();
+        document.getElementById('inputKeteranganMaintenance')?.focus();
     }
 
     function closeModal() {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        form.reset();
+        form?.reset();
     }
 
-    btnOpen.addEventListener('click', openModal);
-    btnClose.addEventListener('click', closeModal);
-    btnCancel.addEventListener('click', closeModal);
+    btnOpen?.addEventListener('click', openModal);
+    btnClose?.addEventListener('click', closeModal);
+    btnCancel?.addEventListener('click', closeModal);
 
-    modal.addEventListener('click', function (e) {
+    modal?.addEventListener('click', function (e) {
         if (e.target === modal) closeModal();
-    });
-
-    tbody.addEventListener('click', function (e) {
-        const btn = e.target.closest('.btn-toggle-status');
-        if (!btn) return;
-
-        const row = btn.closest('.maintenance-row');
-        const currentStatus = row.dataset.status;
-        const nextStatus = currentStatus === 'Selesai' ? 'Dalam Penanganan' : 'Selesai';
-
-        row.dataset.status = nextStatus;
-        btn.className = getStatusBadgeClass(nextStatus);
-        btn.textContent = nextStatus;
-        updateSummaryCards();
-    });
-
-    form.addEventListener('submit', function (e) {
-        if (form.getAttribute('action') === '#') {
-            e.preventDefault();
-            const ticket = document.getElementById('inputTicket').value.trim().toUpperCase();
-            const unit = document.getElementById('inputUnit').value.trim().toUpperCase();
-            const masalah = document.getElementById('inputMasalah').value.trim();
-            const petugas = document.getElementById('inputPetugas').value.trim();
-            const status = document.getElementById('inputStatusMaintenance').value;
-
-            const tr = document.createElement('tr');
-            tr.className = 'maintenance-row hover:bg-white/[0.02] transition';
-            tr.dataset.status = status;
-            tr.innerHTML = `
-                <td class="p-4 font-medium text-white"></td>
-                <td class="p-4 text-purple-400"></td>
-                <td class="p-4 text-gray-300"></td>
-                <td class="p-4 text-gray-400 text-xs"></td>
-                <td class="p-4"><button type="button" class="${getStatusBadgeClass(status)}" title="Klik untuk ubah status"></button></td>
-            `;
-
-            tr.children[0].textContent = ticket;
-            tr.children[1].textContent = unit;
-            tr.children[2].textContent = masalah;
-            tr.children[3].textContent = petugas;
-            tr.children[4].firstElementChild.textContent = status;
-
-            tbody.prepend(tr);
-            updateSummaryCards();
-            closeModal();
-        }
     });
 });
 </script>

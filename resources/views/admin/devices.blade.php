@@ -1,10 +1,14 @@
 @extends('layouts.admin')
 
 @section('content')
+@php
+    $deviceList = collect($devices ?? []);
+@endphp
+
 <header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
     <div>
         <h1 class="text-2xl font-bold text-white tracking-tight">Manajemen Perangkat</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Kelola status konsol PlayStation, PC Gaming, dan pemeliharaan unit.</p>
+        <p class="text-xs text-gray-400 mt-0.5">Kelola unit konsol PlayStation, PC Gaming, dan status ketersediaan.</p>
     </div>
     <div>
         <button type="button" id="btnOpenTambahUnit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2 cursor-pointer">
@@ -20,38 +24,88 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="bg-rose-950/60 border border-rose-700/60 text-rose-300 px-4 py-3 rounded-xl text-sm">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex justify-between items-center">
             <h3 class="font-semibold text-white">Daftar Unit Perangkat Rental</h3>
+            <span class="text-xs text-gray-400">Total: {{ $deviceList->count() }} unit</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="devicesTable">
                 <thead>
                     <tr class="border-b border-gray-800 text-xs text-gray-400 bg-[#110f1c]">
-                        <th class="p-4">Kode Unit</th>
-                        <th class="p-4">Tipe Perangkat</th>
+                        <th class="p-4">Nama Unit</th>
+                        <th class="p-4">Tipe</th>
+                        <th class="p-4">Kategori</th>
+                        <th class="p-4">Harga / Jam</th>
                         <th class="p-4">Status</th>
-                        <th class="p-4">Keterangan</th>
+                        <th class="p-4">Spesifikasi</th>
                         <th class="p-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-800/60 text-sm" id="devicesTableBody">
-                    @foreach($devices as $d)
-                    <tr class="device-row hover:bg-white/[0.02] transition">
-                        <td class="p-4 font-medium text-white col-kode">{{ $d['kode'] }}</td>
-                        <td class="p-4 text-gray-300 col-tipe">{{ $d['tipe'] }}</td>
+                    @forelse($deviceList as $d)
+                    @php
+                        $id = is_array($d) ? ($d['id'] ?? null) : ($d->id ?? null);
+                        $namaDevice = is_array($d) ? ($d['nama_device'] ?? '-') : ($d->nama_device ?? '-');
+                        $tipe = is_array($d) ? ($d['tipe'] ?? 'PS4') : ($d->tipe ?? 'PS4');
+                        $kategori = is_array($d) ? ($d['kategori'] ?? '-') : ($d->kategori ?? '-');
+                        $hargaPerJam = (int) (is_array($d) ? ($d['harga_per_jam'] ?? 0) : ($d->harga_per_jam ?? 0));
+                        $status = is_array($d) ? ($d['status'] ?? 'tersedia') : ($d->status ?? 'tersedia');
+                        $spesifikasi = is_array($d) ? ($d['spesifikasi'] ?? '-') : ($d->spesifikasi ?? '-');
+
+                        $badgeClass = match($status) {
+                            'tersedia'  => 'bg-emerald-900/50 text-emerald-300',
+                            'bermain', 'dipesan' => 'bg-blue-900/50 text-blue-300',
+                            'perbaikan' => 'bg-amber-900/50 text-amber-300',
+                            default     => 'bg-gray-800 text-gray-400',
+                        };
+                    @endphp
+                    <tr class="device-row hover:bg-white/[0.02] transition"
+                        data-id="{{ $id }}"
+                        data-nama="{{ $namaDevice }}"
+                        data-tipe="{{ $tipe }}"
+                        data-kategori="{{ $kategori === '-' ? '' : $kategori }}"
+                        data-harga="{{ $hargaPerJam }}"
+                        data-status="{{ $status }}"
+                        data-spesifikasi="{{ $spesifikasi === '-' ? '' : $spesifikasi }}">
+                        <td class="p-4 font-medium text-white">{{ $namaDevice }}</td>
+                        <td class="p-4 text-purple-400 font-medium">{{ $tipe }}</td>
+                        <td class="p-4 text-gray-300 text-xs">{{ $kategori ?: '-' }}</td>
+                        <td class="p-4 text-white font-semibold">Rp{{ number_format($hargaPerJam, 0, ',', '.') }}</td>
                         <td class="p-4">
-                            <span class="col-status px-2.5 py-1 rounded-full text-xs font-medium {{ $d['status'] == 'Tersedia' ? 'bg-emerald-900/50 text-emerald-300' : ($d['status'] == 'Digunakan' ? 'bg-blue-900/50 text-blue-300' : 'bg-amber-900/50 text-amber-300') }}">
-                                {{ $d['status'] }}
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $badgeClass }}">
+                                {{ ucfirst($status) }}
                             </span>
                         </td>
-                        <td class="p-4 text-gray-400 text-xs col-keterangan">{{ $d['keterangan'] }}</td>
-                        <td class="p-4 text-center space-x-2">
-                            <button type="button" class="btn-edit-unit text-xs text-purple-400 hover:text-purple-300 cursor-pointer">Edit</button>
-                            <button type="button" class="btn-hapus-unit text-xs text-red-400 hover:text-red-300 cursor-pointer">Hapus</button>
+                        <td class="p-4 text-gray-400 text-xs max-w-xs truncate" title="{{ $spesifikasi }}">{{ $spesifikasi ?: '-' }}</td>
+                        <td class="p-4 text-center whitespace-nowrap space-x-2">
+                            @if($id)
+                                <button type="button" class="btn-edit-unit text-xs text-purple-400 hover:text-purple-300 cursor-pointer">Edit</button>
+                                <form action="{{ route('admin.devices.destroy', $id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus unit {{ $namaDevice }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 cursor-pointer">Hapus</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="7" class="p-6 text-center text-xs text-gray-500">
+                            Belum ada data perangkat di database.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -66,39 +120,57 @@
             <button type="button" id="btnCloseModalDevice" class="text-gray-400 hover:text-white text-lg leading-none cursor-pointer">&times;</button>
         </div>
 
-        <form id="formDevice" action="#" method="POST" class="space-y-4">
+        <form id="formDevice" action="{{ route('admin.devices.store') }}" method="POST" class="space-y-4">
             @csrf
+            <input type="hidden" name="_method" id="formDeviceMethod" value="POST">
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Nama Unit</label>
+                <input type="text" name="nama_device" id="inputNamaDevice" required placeholder="Contoh: PlayStation 5 - E"
+                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">Kode Unit</label>
-                    <input type="text" name="kode" id="inputKodeUnit" required placeholder="Contoh: PS5-02"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white uppercase focus:outline-none focus:border-purple-600">
+                    <label class="block text-xs text-gray-400 mb-1">Tipe Perangkat</label>
+                    <select name="tipe" id="inputTipeDevice"
+                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+                        <option value="PS4">PS4</option>
+                        <option value="PS5">PS5</option>
+                        <option value="PC">PC</option>
+                    </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">Tipe Perangkat</label>
-                    <select name="tipe" id="inputTipeUnit"
+                    <label class="block text-xs text-gray-400 mb-1">Kategori</label>
+                    <input type="text" name="kategori" id="inputKategoriDevice" placeholder="Contoh: Reguler / VIP"
                         class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                        <option value="PlayStation 5">PlayStation 5</option>
-                        <option value="PlayStation 4">PlayStation 4</option>
-                        <option value="PC Gaming">PC Gaming</option>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Harga / Jam (Rp)</label>
+                    <input type="number" name="harga_per_jam" id="inputHargaDevice" required min="0" step="500" placeholder="25000"
+                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Status</label>
+                    <select name="status" id="inputStatusDevice"
+                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+                        <option value="tersedia">Tersedia</option>
+                        <option value="dipesan">Dipesan</option>
+                        <option value="bermain">Bermain</option>
+                        <option value="perbaikan">Perbaikan</option>
+                        <option value="offline">Offline</option>
                     </select>
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs text-gray-400 mb-1">Status</label>
-                <select name="status" id="inputStatusUnit"
-                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                    <option value="Tersedia">Tersedia</option>
-                    <option value="Digunakan">Digunakan</option>
-                    <option value="Maintenance">Maintenance</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">Keterangan</label>
-                <input type="text" name="keterangan" id="inputKeteranganUnit" required placeholder="Contoh: Normal atau Sesi aktif (Budi)"
+                <label class="block text-xs text-gray-400 mb-1">Spesifikasi</label>
+                <input type="text" name="spesifikasi" id="inputSpesifikasiDevice" placeholder="Contoh: DualSense, TV 4K 43 inch"
                     class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
             </div>
 
@@ -116,59 +188,63 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const storeUrl = "{{ route('admin.devices.store') }}";
+    const updateUrlTemplate = "{{ route('admin.devices.update', ['id' => '__ID__']) }}";
+
     const modal = document.getElementById('modalDevice');
     const modalTitle = document.getElementById('modalDeviceTitle');
     const btnOpenTambah = document.getElementById('btnOpenTambahUnit');
     const btnClose = document.getElementById('btnCloseModalDevice');
     const btnCancel = document.getElementById('btnBatalModalDevice');
     const form = document.getElementById('formDevice');
+    const methodInput = document.getElementById('formDeviceMethod');
     const tbody = document.getElementById('devicesTableBody');
 
-    const inputKode = document.getElementById('inputKodeUnit');
-    const inputTipe = document.getElementById('inputTipeUnit');
-    const inputStatus = document.getElementById('inputStatusUnit');
-    const inputKeterangan = document.getElementById('inputKeteranganUnit');
-
-    let editingRow = null;
-
-    function getStatusBadgeClass(status) {
-        if (status === 'Tersedia') {
-            return 'col-status px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300';
-        }
-        if (status === 'Digunakan') {
-            return 'col-status px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300';
-        }
-        return 'col-status px-2.5 py-1 rounded-full text-xs font-medium bg-amber-900/50 text-amber-300';
-    }
+    const inputNama = document.getElementById('inputNamaDevice');
+    const inputTipe = document.getElementById('inputTipeDevice');
+    const inputKategori = document.getElementById('inputKategoriDevice');
+    const inputHarga = document.getElementById('inputHargaDevice');
+    const inputStatus = document.getElementById('inputStatusDevice');
+    const inputSpesifikasi = document.getElementById('inputSpesifikasiDevice');
 
     function openTambahModal() {
-        editingRow = null;
         form.reset();
-        inputStatus.value = 'Tersedia';
-        inputKeterangan.value = 'Normal';
+        form.action = storeUrl;
+        methodInput.value = 'POST';
+        inputTipe.value = 'PS4';
+        inputStatus.value = 'tersedia';
+        inputHarga.value = 15000;
         modalTitle.textContent = 'Tambah Unit Perangkat';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        inputKode.focus();
+        inputNama.focus();
     }
 
     function openEditModal(row) {
-        editingRow = row;
-        inputKode.value = row.querySelector('.col-kode').textContent.trim();
-        inputTipe.value = row.querySelector('.col-tipe').textContent.trim();
-        inputStatus.value = row.querySelector('.col-status').textContent.trim();
-        inputKeterangan.value = row.querySelector('.col-keterangan').textContent.trim();
+        const id = row.dataset.id;
+        if (!id) return;
+
+        form.reset();
+        form.action = updateUrlTemplate.replace('__ID__', id);
+        methodInput.value = 'PUT';
+
+        inputNama.value = row.dataset.nama || '';
+        inputTipe.value = row.dataset.tipe || 'PS4';
+        inputKategori.value = row.dataset.kategori || '';
+        inputHarga.value = row.dataset.harga || 0;
+        inputStatus.value = row.dataset.status || 'tersedia';
+        inputSpesifikasi.value = row.dataset.spesifikasi || '';
+
         modalTitle.textContent = 'Edit Unit Perangkat';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        inputKode.focus();
+        inputNama.focus();
     }
 
     function closeModal() {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         form.reset();
-        editingRow = null;
     }
 
     btnOpenTambah.addEventListener('click', openTambahModal);
@@ -180,56 +256,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     tbody.addEventListener('click', function (e) {
-        const row = e.target.closest('.device-row');
-        if (!row) return;
-
-        if (e.target.classList.contains('btn-edit-unit')) {
-            openEditModal(row);
-        } else if (e.target.classList.contains('btn-hapus-unit')) {
-            const kode = row.querySelector('.col-kode').textContent.trim();
-            if (confirm(`Hapus unit "${kode}"?`)) {
-                row.remove();
-            }
-        }
-    });
-
-    form.addEventListener('submit', function (e) {
-        if (form.getAttribute('action') === '#') {
-            e.preventDefault();
-            const kode = inputKode.value.trim().toUpperCase();
-            const tipe = inputTipe.value;
-            const status = inputStatus.value;
-            const keterangan = inputKeterangan.value.trim();
-
-            if (editingRow) {
-                editingRow.querySelector('.col-kode').textContent = kode;
-                editingRow.querySelector('.col-tipe').textContent = tipe;
-                const badge = editingRow.querySelector('.col-status');
-                badge.className = getStatusBadgeClass(status);
-                badge.textContent = status;
-                editingRow.querySelector('.col-keterangan').textContent = keterangan;
-            } else {
-                const tr = document.createElement('tr');
-                tr.className = 'device-row hover:bg-white/[0.02] transition';
-                tr.innerHTML = `
-                    <td class="p-4 font-medium text-white col-kode"></td>
-                    <td class="p-4 text-gray-300 col-tipe"></td>
-                    <td class="p-4"><span class="${getStatusBadgeClass(status)}"></span></td>
-                    <td class="p-4 text-gray-400 text-xs col-keterangan"></td>
-                    <td class="p-4 text-center space-x-2">
-                        <button type="button" class="btn-edit-unit text-xs text-purple-400 hover:text-purple-300 cursor-pointer">Edit</button>
-                        <button type="button" class="btn-hapus-unit text-xs text-red-400 hover:text-red-300 cursor-pointer">Hapus</button>
-                    </td>
-                `;
-                tr.querySelector('.col-kode').textContent = kode;
-                tr.querySelector('.col-tipe').textContent = tipe;
-                tr.querySelector('.col-status').textContent = status;
-                tr.querySelector('.col-keterangan').textContent = keterangan;
-                tbody.appendChild(tr);
-            }
-
-            closeModal();
-        }
+        const btnEdit = e.target.closest('.btn-edit-unit');
+        if (!btnEdit) return;
+        const row = btnEdit.closest('.device-row');
+        if (row) openEditModal(row);
     });
 });
 </script>
