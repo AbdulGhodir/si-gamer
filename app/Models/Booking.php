@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -25,6 +26,16 @@ class Booking extends Model
         'jenis_booking',
         'diskon',
     ];
+
+    public static function hasScheduleConflict(int $deviceId, CarbonInterface $start, CarbonInterface $end): bool
+    {
+        return static::query()
+            ->where('id_device', $deviceId)
+            ->whereNotIn('status', ['dibatalkan', 'selesai'])
+            ->where('waktu_mulai', '<', $end)
+            ->where('waktu_selesai', '>', $start)
+            ->exists();
+    }
 
     public function user()
     {

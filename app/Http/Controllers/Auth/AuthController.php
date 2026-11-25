@@ -34,6 +34,14 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($request->only('email', 'password'), $request->remember)){
+            if (Auth::user()->role === 'staff' && Auth::user()->status !== 'aktif') {
+                Auth::logout();
+
+                return back()->withErrors([
+                    'email' => 'Akun staff ini sedang nonaktif. Hubungi admin.',
+                ])->onlyInput('email');
+            }
+
             $request->session()->regenerate();
             $role = Auth::user()->role;
 
@@ -85,6 +93,7 @@ class AuthController extends Controller
             'nama' => $request->nama,
             'email' => $request->email,
             'password' => bcrypt($request->password),
+            'status' => 'aktif',
         ]);
 
         Auth::login($user);

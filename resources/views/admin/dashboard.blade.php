@@ -58,23 +58,20 @@
             </div>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="text-gray-400 hover:text-red-400 transition p-1 cursor-pointer" title="Logout">
-                    🚪
+                <button type="submit" class="rounded-lg border border-gray-700 p-2 text-gray-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-300 cursor-pointer" title="Logout" aria-label="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M18 15l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
                 </button>
             </form>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-[#0b0a12]">
-        <header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
+        <header class="p-6 pb-4 border-b border-gray-800/50">
             <div>
                 <h1 class="text-2xl font-bold text-white tracking-tight">Ringkasan bisnis</h1>
                 <p class="text-xs text-gray-400 mt-0.5">Kinerja rental dan operasional GameHub, dalam satu tempat.</p>
-            </div>
-            <div>
-                <a href="{{ route('admin.reports') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2">
-                    <span>📥</span> Unduh laporan
-                </a>
             </div>
         </header>
 

@@ -12,16 +12,113 @@
     $breakdownRows = collect($breakdown ?? []);
 @endphp
 
-<header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
+<style>
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 14mm;
+    }
+
+    html,
+    body {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+        color: #111 !important;
+    }
+
+    body {
+        display: block !important;
+    }
+
+    body > aside {
+        display: none !important;
+    }
+
+    body > main {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+    }
+
+    #reportContent {
+        display: block !important;
+        padding: 0 !important;
+    }
+
+    #reportPrintHeader {
+        padding: 0 0 12px !important;
+        border-bottom: 1px solid #bbb !important;
+        color: #111 !important;
+    }
+
+    #reportSummary {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px !important;
+        margin: 0 0 14px !important;
+        padding: 0 !important;
+    }
+
+    #reportSummary > div,
+    #reportTableCard {
+        background: #fff !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        color: #111 !important;
+    }
+
+    #reportSummary *,
+    #reportTableCard * {
+        color: #111 !important;
+    }
+
+    .report-print-controls {
+        display: none !important;
+    }
+
+    #reportTableCard {
+        overflow: visible !important;
+        border-radius: 0 !important;
+    }
+
+    #reportTableCard .overflow-x-auto {
+        overflow: visible !important;
+    }
+
+    #reportTableCard table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    #reportTableCard th,
+    #reportTableCard td {
+        padding: 8px !important;
+        border-bottom: 1px solid #ddd !important;
+    }
+
+    #reportTableCard thead {
+        display: table-header-group;
+    }
+
+    #reportTableCard tr {
+        break-inside: avoid;
+    }
+}
+</style>
+
+<header id="reportPrintHeader" class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
     <div>
         <h1 class="text-2xl font-bold text-white tracking-tight">Laporan Operasional</h1>
         <p class="text-xs text-gray-400 mt-0.5">Rekapitulasi pendapatan, jumlah sesi, dan performa operasional GameHub.</p>
     </div>
 </header>
 
-<div class="p-6 space-y-6">
+<div id="reportContent" class="p-6 space-y-6">
     <!-- Card Ringkasan Kinerja -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div id="reportSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
             <p class="text-xs text-gray-400">Total Pendapatan Lunas</p>
             <h2 class="text-2xl font-bold text-white mt-1">{{ $summary['pendapatan'] }}</h2>
@@ -40,7 +137,7 @@
     </div>
 
     <!-- Card Unduh Rekap Laporan -->
-    <div class="bg-[#141221] border border-gray-800/80 rounded-2xl p-6 space-y-4 shadow-sm">
+    <div class="report-print-controls bg-[#141221] border border-gray-800/80 rounded-2xl p-6 space-y-4 shadow-sm">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="space-y-1">
                 <h3 class="font-semibold text-white">Unduh Rekap Laporan</h3>
@@ -68,7 +165,7 @@
     </div>
 
     <!-- Tabel Ringkasan Data yang Akan Diunduh -->
-    <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
+    <div id="reportTableCard" class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex justify-between items-center">
             <h3 class="font-semibold text-white">Pratinjau Rekap Operasional Per Kategori</h3>
             <span class="text-xs text-gray-400">GameHub</span>

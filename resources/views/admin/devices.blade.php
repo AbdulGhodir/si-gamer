@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputHarga = document.getElementById('inputHargaDevice');
     const inputStatus = document.getElementById('inputStatusDevice');
     const inputSpesifikasi = document.getElementById('inputSpesifikasiDevice');
+    let originalStatus = null;
 
     function openTambahModal() {
         form.reset();
@@ -213,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
         methodInput.value = 'POST';
         inputTipe.value = 'PS4';
         inputStatus.value = 'tersedia';
+        originalStatus = null;
         inputHarga.value = 15000;
         modalTitle.textContent = 'Tambah Unit Perangkat';
         modal.classList.remove('hidden');
@@ -233,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inputKategori.value = row.dataset.kategori || '';
         inputHarga.value = row.dataset.harga || 0;
         inputStatus.value = row.dataset.status || 'tersedia';
+        originalStatus = inputStatus.value;
         inputSpesifikasi.value = row.dataset.spesifikasi || '';
 
         modalTitle.textContent = 'Edit Unit Perangkat';
@@ -250,6 +253,16 @@ document.addEventListener('DOMContentLoaded', function () {
     btnOpenTambah.addEventListener('click', openTambahModal);
     btnClose.addEventListener('click', closeModal);
     btnCancel.addEventListener('click', closeModal);
+    form.addEventListener('submit', function (event) {
+        if (
+            methodInput.value === 'PUT' &&
+            originalStatus !== null &&
+            inputStatus.value !== originalStatus &&
+            !confirm(`Ubah status perangkat menjadi ${inputStatus.value}?`)
+        ) {
+            event.preventDefault();
+        }
+    });
 
     modal.addEventListener('click', function (e) {
         if (e.target === modal) closeModal();

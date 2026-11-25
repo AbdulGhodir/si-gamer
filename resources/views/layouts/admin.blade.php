@@ -58,7 +58,11 @@
             </div>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="text-gray-400 hover:text-red-400 transition p-1" title="Logout">🚪</button>
+                <button type="submit" class="rounded-lg border border-gray-700 p-2 text-gray-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-300" title="Logout" aria-label="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M18 15l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                </button>
             </form>
         </div>
     </aside>

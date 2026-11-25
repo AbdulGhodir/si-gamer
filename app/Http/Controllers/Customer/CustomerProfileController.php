@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Membership;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 
 class CustomerProfileController extends Controller
 {
