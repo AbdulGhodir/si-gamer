@@ -8,10 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-[#0b0c10] text-slate-200 font-sans min-h-screen flex" x-data="{ walkinModal: false, maintenanceModal: false }">
-
+<body class="bg-[#0b0c10] text-slate-200 font-sans min-h-screen flex">
     <aside class="w-64 bg-[#12131a] border-r border-slate-800/80 flex flex-col justify-between shrink-0 min-h-screen sticky top-0 h-screen">
         <div>
             <div class="p-6 flex items-center space-x-3 border-b border-slate-800/60">
@@ -27,46 +25,61 @@
             <div class="px-4 py-6">
                 <p class="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-3 px-3">Workspace Staff</p>
                 <nav class="space-y-1">
-                    <a href="{{ route('staff.dashboard') }}" 
-                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('staff.dashboard') && !request('status') ? 'bg-purple-600/15 text-purple-400 font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }} text-sm transition">
+                    @php
+                        $dashboardActive = request()->routeIs('staff.dashboard');
+                        $bookingsActive = request()->routeIs('staff.bookings');
+                        $sessionsActive = request()->routeIs('staff.sessions');
+                        $walkInActive = request()->routeIs('staff.booking.walkin');
+                        $devicesActive = request()->routeIs('staff.devices');
+                        $maintenanceActive = request()->routeIs('staff.maintenance');
+                        $activeNavClass = 'bg-purple-600/15 text-purple-400 font-semibold';
+                        $inactiveNavClass = 'text-slate-400 hover:text-white hover:bg-slate-800/40';
+                    @endphp
+
+                    <a href="{{ route('staff.dashboard') }}"
+                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $dashboardActive ? $activeNavClass : $inactiveNavClass }} text-sm transition"
+                       @if($dashboardActive) aria-current="page" @endif>
                         <i class="fa-solid fa-table-cells-large w-5 text-center"></i>
                         <span class="flex-1">Dashboard</span>
-                        @if(request()->routeIs('staff.dashboard') && !request('status'))
+                        @if($dashboardActive)
                             <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                         @endif
                     </a>
 
-                    <a href="{{ route('staff.dashboard', ['status' => 'Semua']) }}#table-booking" 
-                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 text-sm font-medium transition">
+                    <a href="{{ route('staff.bookings') }}"
+                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $bookingsActive ? $activeNavClass : $inactiveNavClass }} text-sm font-medium transition"
+                       @if($bookingsActive) aria-current="page" @endif>
                         <i class="fa-regular fa-calendar-check w-5 text-center"></i>
                         <span>Daftar booking</span>
                     </a>
 
-                    <a href="#sesi-aktif" 
-                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 text-sm font-medium transition">
+                    <a href="{{ route('staff.sessions') }}"
+                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $sessionsActive ? $activeNavClass : $inactiveNavClass }} text-sm font-medium transition"
+                       @if($sessionsActive) aria-current="page" @endif>
                         <i class="fa-regular fa-clock w-5 text-center"></i>
                         <span>Sesi aktif</span>
                     </a>
 
-                    <button type="button" 
-                            @click="walkinModal = true" 
-                            class="w-full text-left flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 text-sm font-medium transition">
+                    <a href="{{ route('staff.booking.walkin') }}"
+                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $walkInActive ? $activeNavClass : $inactiveNavClass }} text-sm font-medium transition"
+                       @if($walkInActive) aria-current="page" @endif>
                         <i class="fa-solid fa-user-plus w-5 text-center"></i>
                         <span>Booking walk-in</span>
-                    </button>
+                    </a>
 
-                    <a href="#status-perangkat" 
-                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 text-sm font-medium transition">
+                    <a href="{{ route('staff.devices') }}"
+                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $devicesActive ? $activeNavClass : $inactiveNavClass }} text-sm font-medium transition"
+                       @if($devicesActive) aria-current="page" @endif>
                         <i class="fa-solid fa-desktop w-5 text-center"></i>
                         <span>Status perangkat</span>
                     </a>
 
-                    <button type="button" 
-                            @click="maintenanceModal = true" 
-                            class="w-full text-left flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/40 text-sm font-medium transition">
+                    <a href="{{ route('staff.maintenance') }}"
+                       class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $maintenanceActive ? $activeNavClass : $inactiveNavClass }} text-sm font-medium transition"
+                       @if($maintenanceActive) aria-current="page" @endif>
                         <i class="fa-solid fa-wrench w-5 text-center"></i>
                         <span>Maintenance</span>
-                    </button>
+                    </a>
                 </nav>
             </div>
         </div>
@@ -83,7 +96,7 @@
             </div>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="text-slate-400 hover:text-rose-400 p-1.5 transition" title="Logout">
+                <button type="submit" class="text-slate-400 hover:text-rose-400 p-1.5 transition" title="Logout" aria-label="Logout">
                     <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
                 </button>
             </form>
@@ -99,9 +112,6 @@
                 <span class="font-bold text-white text-sm">GameHub</span>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="text-slate-400 hover:text-white transition">
-                    <i class="fa-regular fa-bell text-sm"></i>
-                </button>
                 <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">
                     {{ strtoupper(substr(Auth::user()->nama ?? 'S', 0, 1)) }}
                 </div>
@@ -125,78 +135,6 @@
 
         @yield('content')
     </main>
-
-    <div x-show="walkinModal" 
-         style="display: none;" 
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="bg-[#12131a] border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl" 
-             @click.away="walkinModal = false">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base font-bold text-white">Booking Walk-in Baru</h3>
-                <button type="button" @click="walkinModal = false" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
-            </div>
-
-            <form action="{{ route('staff.booking.walkin.store') }}" method="POST" class="space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Pilih Perangkat Tersedia</label>
-                    <select name="id_device" required class="w-full bg-[#181924] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-purple-600">
-                        @forelse($devicesTersedia ?? [] as $dev)
-                            <option value="{{ $dev->id }}">
-                                {{ $dev->nama_device }} ({{ $dev->tipe }}) - Rp {{ number_format($dev->harga_per_jam, 0, ',', '.') }}/jam
-                            </option>
-                        @empty
-                            <option value="" disabled selected>Tidak ada unit yang siap saat ini</option>
-                        @endforelse
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Durasi Bermain (Jam)</label>
-                    <input type="number" name="durasi" value="1" min="1" max="12" required 
-                           class="w-full bg-[#181924] border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-600">
-                </div>
-
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" @click="walkinModal = false" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300 hover:bg-slate-700">Batal</button>
-                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-purple-600 text-xs font-semibold text-white hover:bg-purple-500 transition">Mulai Sesi Langsung</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div x-show="maintenanceModal" 
-         style="display: none;" 
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="bg-[#12131a] border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl" 
-             @click.away="maintenanceModal = false">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base font-bold text-white">Status Perbaikan Perangkat</h3>
-                <button type="button" @click="maintenanceModal = false" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
-            </div>
-
-            <form action="{{ route('staff.maintenance.store') }}" method="POST" class="space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Pilih Perangkat</label>
-                    <select name="id_device" required class="w-full bg-[#181924] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-purple-600">
-                        @foreach(\App\Models\Device::all() as $dev)
-                            <option value="{{ $dev->id }}">
-                                {{ $dev->nama_device }} ({{ $dev->tipe }}) - Status: {{ $dev->status }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <p class="text-[11px] text-slate-400">Tindakan ini akan mengubah status perangkat menjadi <b>perbaikan</b> dan menonaktifkannya dari sistem sewa.</p>
-
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" @click="maintenanceModal = false" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300 hover:bg-slate-700">Batal</button>
-                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-amber-600 text-xs font-semibold text-white hover:bg-amber-500 transition">Set ke Perbaikan</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <x-lucide />
 </body>

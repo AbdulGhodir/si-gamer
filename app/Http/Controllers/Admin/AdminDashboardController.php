@@ -87,7 +87,7 @@ class AdminDashboardController extends Controller
                     'nama'   => $u->nama,
                     'email'  => $u->email,
                     'role'   => 'Staff',
-                    'status' => 'Aktif',
+                    'status' => $u->status,
                 ];
             });
 
@@ -107,6 +107,7 @@ class AdminDashboardController extends Controller
             'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role'     => 'staff',
+            'status'   => 'aktif',
         ]);
 
         return redirect()->route('admin.users')->with('success', 'Akun staff berhasil ditambahkan.');
@@ -120,11 +121,13 @@ class AdminDashboardController extends Controller
             'nama'     => 'required|string|max:255',
             'email'    => 'required|email|max:255|unique:users,email,' . $staff->id,
             'password' => 'nullable|string|min:6|max:255',
+            'status'   => 'required|in:aktif,nonaktif',
         ]);
 
         $dataToUpdate = [
             'nama'  => $validated['nama'],
             'email' => $validated['email'],
+            'status' => $validated['status'],
         ];
 
         if (!empty($validated['password'])) {
@@ -225,101 +228,29 @@ class AdminDashboardController extends Controller
                 'total'        => 'Rp' . number_format($nominal, 0, ',', '.'),
                 'status_bayar' => $isPaid ? 'Lunas' : 'Belum bayar',
                 'status'       => $isConfirmed ? 'Dikonfirmasi' : 'Menunggu',
+                'status_raw'   => $b->status,
             ];
         });
 
-        $customers = User::where('role', 'customer')->orderBy('nama')->get();
-        $devices = Device::orderBy('nama_device')->get();
-
-        return view('admin.bookings', compact('bookings', 'customers', 'devices', 'user'));
-    }
-
-    public function storeBooking(Request $request)
-    {
-        $validated = $request->validate([
-            'kode_booking' => 'nullable|string|max:50|unique:bookings,kode_booking',
-            'id_user'      => 'required|exists:users,id',
-            'id_device'    => 'required|exists:devices,id',
-            'waktu_mulai'  => 'required|date',
-            'durasi'       => 'required|integer|min:1|max:24',
-            'total_harga'  => 'required|integer|min:0',
-            'status_bayar' => 'required|in:Lunas,Belum bayar',
-            'status'       => 'required|in:Dikonfirmasi,Menunggu',
-        ]);
-
-        $device = Device::findOrFail($validated['id_device']);
-        $mulai = Carbon::parse($validated['waktu_mulai']);
-        $durasi = (int) $validated['durasi'];
-        $selesai = (clone $mulai)->addHours($durasi);
-
-        $totalHarga = (int) $validated['total_harga'];
-        if ($totalHarga <= 0 && isset($device->harga_per_jam)) {
-            $totalHarga = (int) $device->harga_per_jam * $durasi;
-        }
-
-        $kodeBooking = !empty($validated['kode_booking'])
-            ? strtoupper(trim($validated['kode_booking']))
-            : 'BOK-' . strtoupper(Str::random(6));
-
-        $isConfirmed = $validated['status'] === 'Dikonfirmasi';
-        $isPaid = $validated['status_bayar'] === 'Lunas';
-
-        DB::transaction(function () use (
-            $kodeBooking,
-            $validated,
-            $mulai,
-            $selesai,
-            $durasi,
-            $totalHarga,
-            $isConfirmed,
-            $isPaid
-        ) {
-            $booking = Booking::create([
-                'kode_booking'      => $kodeBooking,
-                'id_user'           => $validated['id_user'],
-                'id_device'         => $validated['id_device'],
-                'id_staff'          => Auth::id(),
-                'waktu_mulai'       => $mulai,
-                'waktu_selesai'     => $selesai,
-                'durasi'            => $durasi,
-                'subtotal'          => $totalHarga,
-                'diskon'            => 0,
-                'total_harga'       => $totalHarga,
-                'status'            => $isConfirmed ? 'bermain' : 'menunggu',
-                'status_konfirmasi' => $isConfirmed ? 'dikonfirmasi' : 'belum_dikonfirmasi',
-                'jenis_booking'     => 'langsung',
-            ]);
-
-            Payment::create([
-                'id_booking'        => $booking->id,
-                'kode_transaksi'    => 'TRX-' . strtoupper(Str::random(8)),
-                'metode_pembayaran' => 'tunai',
-                'jumlah'            => $totalHarga,
-                'status_pembayaran' => $isPaid ? 'lunas' : 'belum_bayar',
-                'waktu_pembayaran'  => $isPaid ? now() : null,
-            ]);
-        });
-
-        return redirect()->route('admin.bookings')->with('success', 'Booking berhasil disimpan ke database.');
+        return view('admin.bookings', compact('bookings', 'user'));
     }
 
     public function toggleBookingStatus($id)
     {
         $booking = Booking::findOrFail($id);
 
-        $currentlyConfirmed = ($booking->status_konfirmasi === 'dikonfirmasi') || in_array($booking->status, ['bermain', 'selesai'], true);
+        $currentlyConfirmed = $booking->status_konfirmasi === 'dikonfirmasi';
 
-        if ($currentlyConfirmed) {
-            $booking->update([
-                'status_konfirmasi' => 'belum_dikonfirmasi',
-                'status'            => 'menunggu',
-            ]);
-        } else {
-            $booking->update([
-                'status_konfirmasi' => 'dikonfirmasi',
-                'status'            => 'bermain',
-            ]);
+        if (in_array($booking->status, ['bermain', 'selesai', 'dibatalkan'], true)) {
+            return redirect()
+                ->route('admin.bookings')
+                ->withErrors(['status' => 'Konfirmasi hanya dapat diubah untuk booking yang masih menunggu.']);
         }
+
+        $booking->update([
+            'status_konfirmasi' => $currentlyConfirmed ? 'belum_dikonfirmasi' : 'dikonfirmasi',
+            'status' => 'menunggu',
+        ]);
 
         return redirect()->route('admin.bookings')->with('success', 'Status booking berhasil diperbarui.');
     }
@@ -333,16 +264,16 @@ class AdminDashboardController extends Controller
             Payment::create([
                 'id_booking'        => $booking->id,
                 'kode_transaksi'    => 'TRX-' . strtoupper(Str::random(8)),
-                'metode_pembayaran' => 'tunai',
+                'metode_pembayaran' => 'qris',
                 'jumlah'            => $nominal,
-                'status_pembayaran' => 'lunas',
+                'status_pembayaran' => 'berhasil',
                 'waktu_pembayaran'  => now(),
             ]);
         } else {
             $isPaid = $this->isPaidBooking($booking);
 
             $booking->payment->update([
-                'status_pembayaran' => $isPaid ? 'belum_bayar' : 'lunas',
+                'status_pembayaran' => $isPaid ? 'menunggu' : 'berhasil',
                 'jumlah'            => $booking->payment->jumlah ?: $nominal,
                 'waktu_pembayaran'  => $isPaid ? null : now(),
             ]);
@@ -372,41 +303,7 @@ class AdminDashboardController extends Controller
             ];
         });
 
-        $devices = Device::orderBy('nama_device')->get();
-
-        return view('admin.maintenance', compact('maintenances', 'devices', 'user'));
-    }
-
-    public function storeMaintenance(Request $request)
-    {
-        $validated = $request->validate([
-            'id_device'   => 'required|exists:devices,id',
-            'keterangan'  => 'required|string|max:1000',
-            'waktu_mulai' => 'nullable|date',
-            'status'      => 'required|in:Dalam Penanganan,Selesai',
-        ]);
-
-        $isSelesai = $validated['status'] === 'Selesai';
-        $mulai = !empty($validated['waktu_mulai']) ? Carbon::parse($validated['waktu_mulai']) : now();
-
-        DB::transaction(function () use ($validated, $isSelesai, $mulai) {
-            Maintenance::create([
-                'id_device'     => $validated['id_device'],
-                'keterangan'    => $validated['keterangan'],
-                'waktu_mulai'   => $mulai,
-                'waktu_selesai' => $isSelesai ? now() : null,
-                'status'        => $isSelesai ? 'selesai' : 'berlangsung',
-            ]);
-
-            $device = Device::find($validated['id_device']);
-            if ($device) {
-                $device->update([
-                    'status' => $isSelesai ? 'tersedia' : 'perbaikan',
-                ]);
-            }
-        });
-
-        return redirect()->route('admin.maintenance')->with('success', 'Tiket maintenance berhasil disimpan ke database.');
+        return view('admin.maintenance', compact('maintenances', 'user'));
     }
 
     public function toggleMaintenanceStatus($id)

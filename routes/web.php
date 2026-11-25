@@ -19,7 +19,7 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'active.staff'])->group(function () {
 
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
@@ -34,20 +34,24 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/devices/{id}', [AdminDashboardController::class, 'destroyDevice'])->name('admin.devices.destroy');
 
     Route::get('/admin/bookings', [AdminDashboardController::class, 'bookings'])->name('admin.bookings');
-    Route::post('/admin/bookings', [AdminDashboardController::class, 'storeBooking'])->name('admin.bookings.store');
     Route::patch('/admin/bookings/{id}/toggle-status', [AdminDashboardController::class, 'toggleBookingStatus'])->name('admin.bookings.toggle_status');
     Route::patch('/admin/bookings/{id}/toggle-payment', [AdminDashboardController::class, 'togglePaymentStatus'])->name('admin.bookings.toggle_payment');
 
     Route::get('/admin/maintenance', [AdminDashboardController::class, 'maintenance'])->name('admin.maintenance');
-    Route::post('/admin/maintenance', [AdminDashboardController::class, 'storeMaintenance'])->name('admin.maintenance.store');
     Route::patch('/admin/maintenance/{id}/toggle', [AdminDashboardController::class, 'toggleMaintenanceStatus'])->name('admin.maintenance.toggle');
 
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports');
 
     Route::get('/staff/dashboard', [StaffController::class, 'dashboard'])->name('staff.dashboard');
+    Route::get('/staff/bookings', [StaffController::class, 'bookings'])->name('staff.bookings');
+    Route::get('/staff/sessions', [StaffController::class, 'sessions'])->name('staff.sessions');
+    Route::get('/staff/booking/walk-in', [StaffController::class, 'walkIn'])->name('staff.booking.walkin');
+    Route::get('/staff/devices', [StaffController::class, 'devices'])->name('staff.devices');
+    Route::get('/staff/maintenance', [StaffController::class, 'maintenance'])->name('staff.maintenance');
     Route::post('/staff/booking/{id}/check-in', [StaffController::class, 'checkIn'])->name('staff.booking.checkin');
     Route::post('/staff/booking/{id}/check-out', [StaffController::class, 'checkOut'])->name('staff.booking.checkout');
     Route::post('/staff/booking/{id}/add-duration', [StaffController::class, 'addDuration'])->name('staff.booking.add_duration');
+    Route::post('/staff/bookings', [StaffController::class, 'storeBooking'])->name('staff.booking.store');
     Route::post('/staff/booking/walk-in', [StaffController::class, 'storeWalkIn'])->name('staff.booking.walkin.store');
     Route::post('/staff/maintenance', [StaffController::class, 'storeMaintenance'])->name('staff.maintenance.store');
 
@@ -61,6 +65,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/customer/profile', [CustomerProfileController::class, 'profile'])->name('customer.profile');
     Route::put('/customer/profile', [CustomerProfileController::class, 'updateProfile'])->name('customer.profile.update');
+
+    Route::get('/customer/membership', [CustomerProfileController::class, 'membership'])->name('customer.membership');
+    Route::post('/customer/membership/aktifkan', [CustomerProfileController::class, 'aktifkanMembership'])->name('customer.membership.aktifkan');
 });
 
 Route::post('/midtrans/notification', [CustomerPaymentController::class, 'handle'])->name('midtrans.notification');

@@ -12,6 +12,7 @@ use App\Services\MidtransService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Midtrans\Snap;
 
 class CustomerBookingController extends Controller
@@ -43,7 +44,7 @@ class CustomerBookingController extends Controller
             'device_id' => 'required|exists:devices,id',
             'tanggal' => 'required|date',
             'jam' => 'required|date_format:H:i',
-            'durasi' => 'required'
+            'durasi' => 'required|integer|min:1|max:12',
         ]);
 
         $durasi = (int)$validate['durasi'];
@@ -58,7 +59,6 @@ class CustomerBookingController extends Controller
             ->first();
 
         $device = Device::findOrFail($validate['device_id']);
-        $subTotalHarga = (int) $device->harga_per_jam * $durasi;
 
         $waktuMulai = Carbon::parse($validate['tanggal'] . ' ' . $validate['jam'] . ':00');
 
@@ -70,16 +70,34 @@ class CustomerBookingController extends Controller
         }
 
         $waktuSelesai = $waktuMulai->copy()->addHours($durasi);
+        $result = DB::transaction(function () use ($user, $device, $waktuMulai, $waktuSelesai, $durasi, $membership) {
+            $lockedDevice = Device::query()->lockForUpdate()->findOrFail($device->id);
 
-        $diskon = $membership ? $subTotalHarga * 0.05 : 0;
+            if (in_array($lockedDevice->status, ['perbaikan', 'offline'], true)) {
+                throw ValidationException::withMessages([
+                    'device_id' => 'Perangkat sedang tidak tersedia untuk booking.',
+                ]);
+            }
 
-        $totalHarga = $subTotalHarga - $diskon;
+            if (Booking::hasScheduleConflict($lockedDevice->id, $waktuMulai, $waktuSelesai)) {
+                throw ValidationException::withMessages([
+                    'jam' => 'Jadwal perangkat berbenturan dengan booking lain. Silakan pilih waktu lain.',
+                ]);
+            }
 
-        $result = DB::transaction(function () use ($user, $device, $waktuMulai, $waktuSelesai, $durasi, $subTotalHarga, $totalHarga, $membership) {
+            $subTotalHarga = (int) $lockedDevice->harga_per_jam * $durasi;
+            $diskon = $membership ? $subTotalHarga * 0.05 : 0;
+            $totalHarga = $subTotalHarga - $diskon;
+            $kodeBooking = 'BK-' . mt_rand(10000, 99999);
+
+            while (Booking::where('kode_booking', $kodeBooking)->exists()) {
+                $kodeBooking = 'BK-' . mt_rand(10000, 99999);
+            }
+
             $booking = Booking::create([
-                'kode_booking' => 'BK-' . mt_rand(10000, 99999),
+                'kode_booking' => $kodeBooking,
                 'id_user' => $user->id,
-                'id_device' => $device->id,
+                'id_device' => $lockedDevice->id,
                 'waktu_mulai' => $waktuMulai,
                 'waktu_selesai' => $waktuSelesai,
                 'durasi' => $durasi,

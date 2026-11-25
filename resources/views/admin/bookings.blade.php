@@ -3,22 +3,15 @@
 @section('content')
 @php
     $bookingList = collect($bookings ?? []);
-    $customerList = collect($customers ?? []);
-    $deviceList = collect($devices ?? []);
     $totalBooking = $bookingList->count();
     $dikonfirmasiCount = $bookingList->where('status', 'Dikonfirmasi')->count();
     $menungguCount = $bookingList->where('status', '!=', 'Dikonfirmasi')->count();
 @endphp
 
-<header class="p-6 pb-4 border-b border-gray-800/50 flex justify-between items-center">
+<header class="p-6 pb-4 border-b border-gray-800/50">
     <div>
         <h1 class="text-2xl font-bold text-white tracking-tight">Daftar Booking</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Kelola jadwal pemesanan perangkat, harga, dan status pembayaran.</p>
-    </div>
-    <div>
-        <button type="button" id="btnOpenTambahBooking" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-purple-900/30 flex items-center gap-2 cursor-pointer">
-            <span>➕</span> Tambah Booking
-        </button>
+        <p class="text-xs text-gray-400 mt-0.5">Pantau jadwal pemesanan perangkat dan status pembayaran.</p>
     </div>
 </header>
 
@@ -62,7 +55,7 @@
     <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex justify-between items-center">
             <h3 class="font-semibold text-white">Jadwal Booking Aktif</h3>
-            <span class="text-xs text-gray-400">Klik badge untuk mengubah status booking atau bayar</span>
+            <span class="text-xs text-gray-400">Klik status untuk mengubah setelah konfirmasi</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="bookingsTable">
@@ -85,6 +78,13 @@
                         $isConfirmed = $bookingStatus === 'Dikonfirmasi';
                         $paymentStatus = $b['status_bayar'] ?? 'Belum bayar';
                         $isPaid = $paymentStatus === 'Lunas';
+                        $canToggleStatus = ($b['status_raw'] ?? 'menunggu') === 'menunggu';
+                        $paymentConfirm = $isPaid
+                            ? 'Ubah status pembayaran booking ini menjadi belum bayar?'
+                            : 'Tandai pembayaran booking ini sebagai lunas?';
+                        $bookingConfirm = $isConfirmed
+                            ? 'Batalkan konfirmasi booking ini?'
+                            : 'Konfirmasi booking ini?';
                         $totalHarga = $b['total'] ?? 'Rp0';
                     @endphp
                     <tr class="booking-row hover:bg-white/[0.02] transition">
@@ -95,10 +95,11 @@
                         <td class="p-4 font-semibold text-white">{{ $totalHarga }}</td>
                         <td class="p-4">
                             @if($modelId)
-                                <form action="{{ route('admin.bookings.toggle_payment', $modelId) }}" method="POST" class="inline">
+                                <form action="{{ route('admin.bookings.toggle_payment', $modelId) }}" method="POST" class="inline"
+                                      onsubmit="return confirm(@js($paymentConfirm))">
                                     @csrf
                                     @method('PATCH')
-                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isPaid ? 'bg-emerald-900/50 text-emerald-300' : 'bg-rose-900/50 text-rose-300' }}" title="Klik untuk ubah status bayar">
+                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isPaid ? 'bg-emerald-900/50 text-emerald-300' : 'bg-rose-900/50 text-rose-300' }}" title="Klik untuk ubah status pembayaran">
                                         {{ $paymentStatus }}
                                     </button>
                                 </form>
@@ -109,11 +110,12 @@
                             @endif
                         </td>
                         <td class="p-4">
-                            @if($modelId)
-                                <form action="{{ route('admin.bookings.toggle_status', $modelId) }}" method="POST" class="inline">
+                            @if($modelId && $canToggleStatus)
+                                <form action="{{ route('admin.bookings.toggle_status', $modelId) }}" method="POST" class="inline"
+                                      onsubmit="return confirm(@js($bookingConfirm))">
                                     @csrf
                                     @method('PATCH')
-                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isConfirmed ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}" title="Klik untuk ubah status">
+                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isConfirmed ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}" title="Klik untuk ubah status booking">
                                         {{ $bookingStatus }}
                                     </button>
                                 </form>
@@ -136,145 +138,4 @@
         </div>
     </div>
 </div>
-
-<!-- Modal Tambah Booking -->
-<div id="modalTambahBooking" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-    <div class="bg-[#141221] border border-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl">
-        <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
-            <h3 class="font-semibold text-white text-base">Tambah Booking Baru</h3>
-            <button type="button" id="btnCloseTambahBooking" class="text-gray-400 hover:text-white text-lg leading-none cursor-pointer">&times;</button>
-        </div>
-
-        <form id="formTambahBooking" action="{{ route('admin.bookings.store') }}" method="POST" class="space-y-4">
-            @csrf
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">ID Booking (Opsional)</label>
-                    <input type="text" name="kode_booking" id="inputIdBooking" placeholder="Otomatis jika kosong"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white uppercase focus:outline-none focus:border-purple-600">
-                </div>
-
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Durasi (Jam)</label>
-                    <input type="number" name="durasi" id="inputDurasiBooking" required min="1" max="24" value="2"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">Pelanggan</label>
-                <select name="id_user" id="inputPelangganBooking" required
-                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                    @foreach($customerList as $c)
-                        <option value="{{ $c->id }}">{{ $c->nama }} ({{ $c->email }})</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">Unit Perangkat</label>
-                <select name="id_device" id="inputDeviceBooking" required
-                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                    @foreach($deviceList as $dev)
-                        <option value="{{ $dev->id }}" data-harga="{{ $dev->harga_per_jam ?? 0 }}">
-                            {{ $dev->nama_device }} · {{ $dev->tipe }} (Rp{{ number_format((int) ($dev->harga_per_jam ?? 0), 0, ',', '.') }}/jam)
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Jadwal Mulai</label>
-                    <input type="datetime-local" name="waktu_mulai" id="inputJadwalBooking" required
-                        value="{{ now()->format('Y-m-d\TH:i') }}"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                </div>
-
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Total / Harga (Rp)</label>
-                    <input type="number" name="total_harga" id="inputTotalBooking" required min="0" step="500" value="30000"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Status Pembayaran</label>
-                    <select name="status_bayar" id="inputStatusBayarBooking"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                        <option value="Lunas">Lunas</option>
-                        <option value="Belum bayar">Belum bayar</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Status Booking</label>
-                    <select name="status" id="inputStatusBooking"
-                        class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
-                        <option value="Dikonfirmasi">Dikonfirmasi</option>
-                        <option value="Menunggu">Menunggu</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-3 border-t border-gray-800">
-                <button type="button" id="btnBatalTambahBooking" class="px-4 py-2 rounded-xl text-xs text-gray-300 bg-gray-800 hover:bg-gray-700 transition cursor-pointer">
-                    Batal
-                </button>
-                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 transition cursor-pointer">
-                    Simpan
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const modal = document.getElementById('modalTambahBooking');
-    const btnOpen = document.getElementById('btnOpenTambahBooking');
-    const btnClose = document.getElementById('btnCloseTambahBooking');
-    const btnCancel = document.getElementById('btnBatalTambahBooking');
-    const form = document.getElementById('formTambahBooking');
-
-    const selectDevice = document.getElementById('inputDeviceBooking');
-    const inputDurasi = document.getElementById('inputDurasiBooking');
-    const inputTotal = document.getElementById('inputTotalBooking');
-
-    function recalculateTotal() {
-        if (!selectDevice || !inputDurasi || !inputTotal) return;
-        const selectedOption = selectDevice.options[selectDevice.selectedIndex];
-        const hargaPerJam = Number(selectedOption?.dataset?.harga || 0);
-        const durasi = Math.max(1, Number(inputDurasi.value || 1));
-        if (hargaPerJam > 0) {
-            inputTotal.value = hargaPerJam * durasi;
-        }
-    }
-
-    selectDevice?.addEventListener('change', recalculateTotal);
-    inputDurasi?.addEventListener('input', recalculateTotal);
-
-    function openModal() {
-        recalculateTotal();
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.getElementById('inputIdBooking')?.focus();
-    }
-
-    function closeModal() {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        form?.reset();
-    }
-
-    btnOpen?.addEventListener('click', openModal);
-    btnClose?.addEventListener('click', closeModal);
-    btnCancel?.addEventListener('click', closeModal);
-
-    modal?.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-});
-</script>
 @endsection

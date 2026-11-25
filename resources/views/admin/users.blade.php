@@ -57,11 +57,13 @@
                         $nama = $u['nama'] ?? '-';
                         $email = $u['email'] ?? '-';
                         $status = $u['status'] ?? 'Aktif';
+                        $isActive = $status === 'aktif';
                     @endphp
                     <tr class="user-row hover:bg-white/[0.02] transition"
                         data-id="{{ $staffId }}"
                         data-nama="{{ $nama }}"
-                        data-email="{{ $email }}">
+                        data-email="{{ $email }}"
+                        data-status="{{ $status }}">
                         <td class="p-4 font-medium text-white">{{ $nama }}</td>
                         <td class="p-4 text-gray-400 text-xs">{{ $email }}</td>
                         <td class="p-4">
@@ -70,8 +72,8 @@
                             </span>
                         </td>
                         <td class="p-4">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-300">
-                                {{ $status }}
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $isActive ? 'bg-emerald-900/50 text-emerald-300' : 'bg-rose-900/50 text-rose-300' }}">
+                                {{ ucfirst($status) }}
                             </span>
                         </td>
                         <td class="p-4 text-center whitespace-nowrap space-x-2">
@@ -139,6 +141,15 @@
                     class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-gray-400 focus:outline-none">
             </div>
 
+            <div id="statusUserField" class="hidden">
+                <label class="block text-xs text-gray-400 mb-1">Status Akun</label>
+                <select name="status" id="inputStatusUser"
+                    class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+                    <option value="aktif">Aktif</option>
+                    <option value="nonaktif">Nonaktif</option>
+                </select>
+            </div>
+
             <div class="flex justify-end gap-2 pt-3 border-t border-gray-800">
                 <button type="button" id="btnBatalModalUser" class="px-4 py-2 rounded-xl text-xs text-gray-300 bg-gray-800 hover:bg-gray-700 transition cursor-pointer">
                     Batal
@@ -172,6 +183,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputEmail = document.getElementById('inputEmailUser');
     const inputPassword = document.getElementById('inputPasswordUser');
     const labelPassword = document.getElementById('labelPasswordUser');
+    const statusField = document.getElementById('statusUserField');
+    const inputStatus = document.getElementById('inputStatusUser');
+    let originalStatus = null;
 
     function filterUsers() {
         if (!searchInput || !emptyRow) return;
@@ -195,6 +209,9 @@ document.addEventListener('DOMContentLoaded', function () {
         form.action = storeUrl;
         methodInput.value = 'POST';
         inputPassword.required = true;
+        inputStatus.value = 'aktif';
+        originalStatus = null;
+        statusField.classList.add('hidden');
         labelPassword.textContent = 'Password (Minimal 6 karakter)';
         modalTitle.textContent = 'Tambah Akun Staff';
         modal.classList.remove('hidden');
@@ -212,6 +229,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         inputNama.value = row.dataset.nama || '';
         inputEmail.value = row.dataset.email || '';
+        inputStatus.value = row.dataset.status || 'aktif';
+        originalStatus = inputStatus.value;
+        statusField.classList.remove('hidden');
         inputPassword.required = false;
         labelPassword.textContent = 'Password Baru (Kosongkan jika tidak diubah)';
 
@@ -230,6 +250,16 @@ document.addEventListener('DOMContentLoaded', function () {
     btnOpenTambah?.addEventListener('click', openTambahModal);
     btnClose?.addEventListener('click', closeModal);
     btnCancel?.addEventListener('click', closeModal);
+    form?.addEventListener('submit', function (event) {
+        if (
+            methodInput.value === 'PUT' &&
+            originalStatus !== null &&
+            inputStatus.value !== originalStatus &&
+            !confirm(`Ubah status akun staff menjadi ${inputStatus.value}?`)
+        ) {
+            event.preventDefault();
+        }
+    });
 
     modal?.addEventListener('click', function (e) {
         if (e.target === modal) closeModal();
