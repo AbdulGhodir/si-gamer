@@ -105,8 +105,35 @@
                         <h3 class="font-semibold text-white">Utilisasi perangkat</h3>
                         <span class="text-xs text-gray-400">Saat ini {{ $stats['utilitas'] ?? '0%' }}</span>
                     </div>
-                    <div class="h-48 flex items-center justify-center border border-dashed border-gray-800 rounded-xl text-gray-500 text-sm">
-                        [ Area Grafik Batang Perangkat ]
+                    <div class="rounded-xl border border-gray-800 bg-[#110f1c] p-5" role="group" aria-label="Distribusi status perangkat">
+                        <div class="flex items-center justify-between mb-5">
+                            <p class="text-xs text-gray-400">Status seluruh perangkat</p>
+                            <p class="text-xs text-gray-500">{{ $totalDeviceCount }} unit</p>
+                        </div>
+                        @if($totalDeviceCount > 0)
+                            <div class="space-y-5">
+                                @foreach($deviceChart as $item)
+                                    <div class="grid grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] items-center gap-3">
+                                        <span class="text-xs text-gray-300">{{ $item['label'] }}</span>
+                                        <div class="h-3 overflow-hidden rounded-full bg-gray-800" role="progressbar"
+                                             aria-label="{{ $item['label'] }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="{{ $totalDeviceCount }}"
+                                             aria-valuenow="{{ $item['count'] }}">
+                                            <div class="h-full rounded-full {{ $item['color'] }} transition-all"
+                                                 style="width: {{ $item['percentage'] }}%"></div>
+                                        </div>
+                                        <span class="text-right text-xs text-gray-400">
+                                            {{ $item['count'] }} <span class="text-gray-600">({{ $item['percentage'] }}%)</span>
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="flex h-32 items-center justify-center text-sm text-gray-500">
+                                Belum ada perangkat untuk ditampilkan.
+                            </div>
+                        @endif
                     </div>
                 </div>
 

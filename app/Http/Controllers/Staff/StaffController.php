@@ -51,6 +51,12 @@ class StaffController extends Controller
         $perangkatSiap = Device::where('status', 'tersedia')->count();
         $perluMaintenance = Device::where('status', 'perbaikan')->count();
         $perangkatMaintenance = Device::where('status', 'perbaikan')->orderBy('nama_device')->first();
+        $agendaBooking = Booking::with(['user', 'device'])
+            ->where('status', 'menunggu')
+            ->where('waktu_mulai', '>=', now())
+            ->orderBy('waktu_mulai')
+            ->limit(5)
+            ->get();
 
         return view('staff.dashboard', compact(
             'bookingHariIni',
@@ -59,7 +65,8 @@ class StaffController extends Controller
             'totalPerangkat',
             'perangkatSiap',
             'perluMaintenance',
-            'perangkatMaintenance'
+            'perangkatMaintenance',
+            'agendaBooking'
         ));
     }
 

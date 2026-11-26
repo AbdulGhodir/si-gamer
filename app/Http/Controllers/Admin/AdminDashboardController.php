@@ -6,14 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Device;
 use App\Models\Maintenance;
-use App\Models\Payment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AdminDashboardController extends Controller
 {
@@ -51,9 +49,38 @@ class AdminDashboardController extends Controller
                 return $paymentAmount > 0 ? $paymentAmount : (int) ($b->total_harga ?? $b->subtotal ?? 0);
             });
 
-        $totalDevices = max(1, $devices->count());
+        $totalDeviceCount = $devices->count();
+        $totalDevices = max(1, $totalDeviceCount);
         $activeDevicesCount = $devices->whereIn('status', ['bermain', 'dipesan'])->count();
         $utilitasPersen = round(($activeDevicesCount / $totalDevices) * 100);
+        $deviceChart = collect([
+            [
+                'label' => 'Digunakan',
+                'count' => $activeDevicesCount,
+                'color' => 'bg-purple-500',
+            ],
+            [
+                'label' => 'Tersedia',
+                'count' => $devices->where('status', 'tersedia')->count(),
+                'color' => 'bg-emerald-500',
+            ],
+            [
+                'label' => 'Perbaikan',
+                'count' => $devices->where('status', 'perbaikan')->count(),
+                'color' => 'bg-amber-500',
+            ],
+            [
+                'label' => 'Offline',
+                'count' => $devices->where('status', 'offline')->count(),
+                'color' => 'bg-slate-500',
+            ],
+        ])->map(function (array $item) use ($totalDeviceCount) {
+            $item['percentage'] = $totalDeviceCount > 0
+                ? (int) round(($item['count'] / $totalDeviceCount) * 100)
+                : 0;
+
+            return $item;
+        });
 
         $stats = [
             'pendapatan'          => 'Rp' . number_format((int) $totalPendapatan, 0, ',', '.'),
@@ -71,7 +98,13 @@ class AdminDashboardController extends Controller
             ->latest('id')
             ->first();
 
-        return view('admin.dashboard', compact('stats', 'user', 'activeMaintenance'));
+        return view('admin.dashboard', compact(
+            'stats',
+            'user',
+            'activeMaintenance',
+            'deviceChart',
+            'totalDeviceCount'
+        ));
     }
 
     public function users()
@@ -220,7 +253,6 @@ class AdminDashboardController extends Controller
             $nominal = (int) ($b->total_harga ?? $b->subtotal ?? 0);
 
             return [
-                'model_id'     => $b->id,
                 'id'           => $b->kode_booking,
                 'pelanggan'    => $b->user?->nama ?? 'Pelanggan',
                 'jadwal'       => $mulaiFormatted . $unitLabel,
@@ -228,58 +260,10 @@ class AdminDashboardController extends Controller
                 'total'        => 'Rp' . number_format($nominal, 0, ',', '.'),
                 'status_bayar' => $isPaid ? 'Lunas' : 'Belum bayar',
                 'status'       => $isConfirmed ? 'Dikonfirmasi' : 'Menunggu',
-                'status_raw'   => $b->status,
             ];
         });
 
         return view('admin.bookings', compact('bookings', 'user'));
-    }
-
-    public function toggleBookingStatus($id)
-    {
-        $booking = Booking::findOrFail($id);
-
-        $currentlyConfirmed = $booking->status_konfirmasi === 'dikonfirmasi';
-
-        if (in_array($booking->status, ['bermain', 'selesai', 'dibatalkan'], true)) {
-            return redirect()
-                ->route('admin.bookings')
-                ->withErrors(['status' => 'Konfirmasi hanya dapat diubah untuk booking yang masih menunggu.']);
-        }
-
-        $booking->update([
-            'status_konfirmasi' => $currentlyConfirmed ? 'belum_dikonfirmasi' : 'dikonfirmasi',
-            'status' => 'menunggu',
-        ]);
-
-        return redirect()->route('admin.bookings')->with('success', 'Status booking berhasil diperbarui.');
-    }
-
-    public function togglePaymentStatus($id)
-    {
-        $booking = Booking::with('payment')->findOrFail($id);
-        $nominal = (int) ($booking->total_harga ?? $booking->subtotal ?? 0);
-
-        if (!$booking->payment) {
-            Payment::create([
-                'id_booking'        => $booking->id,
-                'kode_transaksi'    => 'TRX-' . strtoupper(Str::random(8)),
-                'metode_pembayaran' => 'qris',
-                'jumlah'            => $nominal,
-                'status_pembayaran' => 'berhasil',
-                'waktu_pembayaran'  => now(),
-            ]);
-        } else {
-            $isPaid = $this->isPaidBooking($booking);
-
-            $booking->payment->update([
-                'status_pembayaran' => $isPaid ? 'menunggu' : 'berhasil',
-                'jumlah'            => $booking->payment->jumlah ?: $nominal,
-                'waktu_pembayaran'  => $isPaid ? null : now(),
-            ]);
-        }
-
-        return redirect()->route('admin.bookings')->with('success', 'Status pembayaran booking berhasil diperbarui.');
     }
 
     public function maintenance()

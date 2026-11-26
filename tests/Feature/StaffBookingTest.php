@@ -61,13 +61,17 @@ class StaffBookingTest extends TestCase
     public function test_staff_dashboard_links_to_booking_management(): void
     {
         $staff = $this->createUser('staff', 'staff@example.test');
-        $this->createUser('customer', 'customer@example.test');
-        $this->createDevice();
+        $customer = $this->createUser('customer', 'customer@example.test');
+        $device = $this->createDevice();
+        $booking = $this->createBooking($customer, $device, now()->addHours(2), 1);
 
         $response = $this->actingAs($staff)->get(route('staff.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Tambah Booking');
+        $response->assertSee('Agenda booking terdekat');
+        $response->assertSee($booking->kode_booking);
+        $response->assertSee($customer->nama);
+        $response->assertDontSee('Akses cepat');
     }
 
     public function test_staff_features_open_on_separate_pages_with_the_active_navigation_highlighted(): void
@@ -110,8 +114,11 @@ class StaffBookingTest extends TestCase
         $response->assertSee('Pantau jadwal pemesanan perangkat');
         $response->assertSee('Belum bayar');
         $response->assertSee('Menunggu');
-        $response->assertSee('confirm(');
-        $response->assertDontSee('Klik badge');
+        $response->assertSee('Informasi booking dan pembayaran');
+        $response->assertDontSee('confirm(');
+
+        $this->patch("/admin/bookings/{$booking->id}/toggle-status")->assertNotFound();
+        $this->patch("/admin/bookings/{$booking->id}/toggle-payment")->assertNotFound();
     }
 
     public function test_report_download_is_on_reports_page_not_admin_dashboard(): void
@@ -127,6 +134,27 @@ class StaffBookingTest extends TestCase
         $reportResponse->assertSee('Download Laporan (.CSV)');
         $reportResponse->assertSee('@media print', false);
         $reportResponse->assertSee('report-print-controls');
+    }
+
+    public function test_admin_dashboard_chart_shows_device_status_counts(): void
+    {
+        $admin = $this->createUser('admin', 'admin@example.test');
+        $this->createDevice();
+        $this->createDevice()->update(['status' => 'tersedia']);
+        $this->createDevice()->update(['status' => 'bermain']);
+        $this->createDevice()->update(['status' => 'dipesan']);
+        $this->createDevice()->update(['status' => 'perbaikan']);
+        $this->createDevice()->update(['status' => 'offline']);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Distribusi status perangkat');
+        $response->assertSee('2 <span class="text-gray-600">(33%)</span>', false);
+        $response->assertSee('Tersedia');
+        $response->assertSee('Perbaikan');
+        $response->assertSee('Offline');
+        $response->assertDontSee('[ Area Grafik Batang Perangkat ]');
     }
 
     public function test_staff_cannot_create_a_booking_that_overlaps_an_existing_booking(): void
