@@ -11,6 +11,7 @@ use App\Http\Controllers\Staff\StaffController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'loginForm'])->name('login');
+    Route::get('/login', [AuthController::class, 'loginForm']);
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
     Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
@@ -51,9 +52,11 @@ Route::middleware(['auth', 'active.staff'])->group(function () {
     Route::post('/staff/booking/{id}/check-in', [StaffController::class, 'checkIn'])->name('staff.booking.checkin');
     Route::post('/staff/booking/{id}/check-out', [StaffController::class, 'checkOut'])->name('staff.booking.checkout');
     Route::post('/staff/booking/{id}/add-duration', [StaffController::class, 'addDuration'])->name('staff.booking.add_duration');
+    Route::post('/staff/booking/{id}/confirm-payment', [StaffController::class, 'confirmPayment'])->name('staff.booking.confirm_payment');
     Route::post('/staff/bookings', [StaffController::class, 'storeBooking'])->name('staff.booking.store');
     Route::post('/staff/booking/walk-in', [StaffController::class, 'storeWalkIn'])->name('staff.booking.walkin.store');
     Route::post('/staff/maintenance', [StaffController::class, 'storeMaintenance'])->name('staff.maintenance.store');
+    Route::post('/staff/maintenance/{id}/complete', [StaffController::class, 'completeMaintenance'])->name('staff.maintenance.complete');
 
     Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
 

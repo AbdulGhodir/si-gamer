@@ -60,9 +60,18 @@
                         <td class="py-3 text-slate-300">{{ $maintenance->keterangan }}</td>
                         <td class="py-3 text-slate-400">{{ $maintenance->waktu_mulai ? \Carbon\Carbon::parse($maintenance->waktu_mulai)->format('d M Y, H.i') : '-' }}</td>
                         <td class="py-3">
-                            <span class="inline-flex px-2 py-1 rounded text-[10px] font-medium {{ $maintenance->status === 'berlangsung' ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400' }}">
-                                {{ $maintenance->status === 'berlangsung' ? 'Dalam penanganan' : ucfirst($maintenance->status) }}
-                            </span>
+                            @if($maintenance->status === 'berlangsung')
+                                <form action="{{ route('staff.maintenance.complete', $maintenance->id) }}" method="POST" class="inline" onsubmit="return confirm('Tandai perbaikan perangkat ini sebagai selesai dan kembalikan status ke tersedia?')">
+                                    @csrf
+                                    <button type="submit" class="inline-flex px-2 py-1 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition cursor-pointer" title="Klik untuk selesaikan perbaikan">
+                                        Dalam penanganan
+                                    </button>
+                                </form>
+                            @else
+                                <span class="inline-flex px-2 py-1 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400">
+                                    {{ ucfirst($maintenance->status) }}
+                                </span>
+                            @endif
                         </td>
                     </tr>
                 @empty
