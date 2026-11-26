@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Models\Booking;
 use App\Models\Device;
 use App\Models\Maintenance;
+use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,10 +19,29 @@ use Illuminate\Validation\ValidationException;
 
 class StaffController extends Controller
 {
+    private function calculatePricing(int $userId, int $hargaPerJam, int $durasi): array
+    {
+        $hasActiveMembership = Membership::where('id_user', $userId)
+            ->where('status', 'aktif')
+            ->where(function ($query) {
+                $query->whereNull('tanggal_berakhir')
+                    ->orWhereDate('tanggal_berakhir', '>=', today());
+            })
+            ->exists();
+
+        $subtotal = $hargaPerJam * $durasi;
+        $diskon = $hasActiveMembership ? (int) round($subtotal * 0.05) : 0;
+        $totalHarga = max(0, $subtotal - $diskon);
+
+        return [$subtotal, $diskon, $totalHarga];
+    }
+
     public function dashboard()
     {
         $today = Carbon::today();
-        $bookingHariIni = Booking::whereDate('waktu_mulai', $today)->count();
+        $bookingHariIni = Booking::whereDate('waktu_mulai', $today)
+            ->where('status', '!=', 'dibatalkan')
+            ->count();
         $bookingAkanDatang = Booking::whereDate('waktu_mulai', $today)
             ->where('status', 'menunggu')
             ->where('waktu_mulai', '>=', now())
@@ -30,7 +50,7 @@ class StaffController extends Controller
         $sesiAktifCount = Booking::where('status', 'bermain')->count();
         $perangkatSiap = Device::where('status', 'tersedia')->count();
         $perluMaintenance = Device::where('status', 'perbaikan')->count();
-        $perangkatMaintenance = Device::where('status', 'perbaikan')->first();
+        $perangkatMaintenance = Device::where('status', 'perbaikan')->orderBy('nama_device')->first();
 
         return view('staff.dashboard', compact(
             'bookingHariIni',
@@ -45,15 +65,16 @@ class StaffController extends Controller
 
     public function bookings(Request $request)
     {
-        $query = Booking::with(['user', 'device'])
+        $query = Booking::with(['user', 'device', 'payment'])
             ->latest('waktu_mulai');
 
         if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-            $query->where(function ($q) use ($search) {
-                $q->where('kode_booking', 'ilike', "%{$search}%")
-                    ->orWhereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where('nama', 'ilike', "%{$search}%");
+            $search = trim($request->string('search')->toString());
+            $like = '%' . mb_strtolower($search) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(kode_booking) LIKE ?', [$like])
+                    ->orWhereHas('user', function ($userQuery) use ($like) {
+                        $userQuery->whereRaw('LOWER(nama) LIKE ?', [$like]);
                     });
             });
         }
@@ -73,7 +94,7 @@ class StaffController extends Controller
 
     public function sessions()
     {
-        $sesiAktif = Booking::with(['user', 'device'])
+        $sesiAktif = Booking::with(['user', 'device', 'payment'])
             ->where('status', 'bermain')
             ->orderBy('waktu_selesai')
             ->get();
@@ -110,51 +131,228 @@ class StaffController extends Controller
 
     public function checkIn($id)
     {
-        $booking = Booking::findOrFail($id);
-        $booking->update([
-            'status' => 'bermain',
-            'status_konfirmasi' => 'dikonfirmasi',
-            'id_staff' => Auth::id(),
-            'waktu_mulai' => now(),
-            'waktu_selesai' => now()->addHours($booking->durasi),
-        ]);
+        $booking = DB::transaction(function () use ($id) {
+            $booking = Booking::with(['device', 'payment'])->lockForUpdate()->findOrFail($id);
 
-        if ($booking->device) {
-            $booking->device->update(['status' => 'bermain']);
-        }
+            if ($booking->status !== 'menunggu') {
+                throw ValidationException::withMessages([
+                    'booking' => 'Hanya booking berstatus menunggu yang dapat melakukan check-in.',
+                ]);
+            }
+
+            $device = Device::query()->lockForUpdate()->findOrFail($booking->id_device);
+
+            if (in_array($device->status, ['perbaikan', 'offline'], true)) {
+                throw ValidationException::withMessages([
+                    'id_device' => 'Perangkat sedang dalam perbaikan atau offline, tidak dapat check-in.',
+                ]);
+            }
+
+            $hasActiveSession = Booking::where('id_device', $device->id)
+                ->where('id', '!=', $booking->id)
+                ->where('status', 'bermain')
+                ->exists();
+
+            if ($device->status === 'bermain' || $hasActiveSession) {
+                throw ValidationException::withMessages([
+                    'id_device' => 'Perangkat sedang digunakan oleh sesi aktif lain.',
+                ]);
+            }
+
+            $waktuMulai = now();
+            $waktuSelesai = $waktuMulai->copy()->addHours((int) $booking->durasi);
+
+            $booking->update([
+                'status' => 'bermain',
+                'status_konfirmasi' => 'dikonfirmasi',
+                'id_staff' => Auth::id(),
+                'waktu_mulai' => $waktuMulai,
+                'waktu_selesai' => $waktuSelesai,
+            ]);
+
+            if (!$booking->payment) {
+                Payment::create([
+                    'id_booking' => $booking->id,
+                    'kode_transaksi' => 'TR-' . $booking->id . strtoupper(Str::random(8)),
+                    'metode_pembayaran' => 'qris',
+                    'jumlah' => (int) ($booking->total_harga ?? $booking->subtotal ?? 0),
+                    'status_pembayaran' => 'menunggu',
+                ]);
+            }
+
+            $device->update(['status' => 'bermain']);
+
+            return $booking;
+        });
 
         return back()->with('success', "Booking {$booking->kode_booking} berhasil Check-in. Sesi dimulai.");
     }
 
     public function checkOut($id)
     {
-        $booking = Booking::findOrFail($id);
-        $booking->update([
-            'status' => 'selesai',
-            'waktu_selesai' => now(),
-            'id_staff' => Auth::id(),
-        ]);
+        $booking = DB::transaction(function () use ($id) {
+            $booking = Booking::with(['device', 'payment'])->lockForUpdate()->findOrFail($id);
 
-        if ($booking->device) {
-            $booking->device->update(['status' => 'tersedia']);
-        }
+            if ($booking->status !== 'bermain') {
+                throw ValidationException::withMessages([
+                    'booking' => 'Hanya sesi yang sedang bermain yang dapat di-check-out.',
+                ]);
+            }
+
+            $now = now();
+
+            $booking->update([
+                'status' => 'selesai',
+                'waktu_selesai' => $now,
+                'id_staff' => Auth::id(),
+            ]);
+
+            $nominal = (int) ($booking->total_harga ?? $booking->subtotal ?? 0);
+
+            if (!$booking->payment) {
+                Payment::create([
+                    'id_booking' => $booking->id,
+                    'kode_transaksi' => 'TR-' . $booking->id . strtoupper(Str::random(8)),
+                    'metode_pembayaran' => 'qris',
+                    'jumlah' => $nominal,
+                    'status_pembayaran' => 'berhasil',
+                    'waktu_pembayaran' => $now,
+                ]);
+            } elseif ($booking->payment->status_pembayaran === 'menunggu') {
+                $booking->payment->update([
+                    'jumlah' => $nominal,
+                    'status_pembayaran' => 'berhasil',
+                    'waktu_pembayaran' => $now,
+                ]);
+            }
+
+            if ($booking->device) {
+                $device = Device::query()->lockForUpdate()->find($booking->id_device);
+                if ($device) {
+                    $hasActiveMaintenance = Maintenance::where('id_device', $device->id)
+                        ->where('status', 'berlangsung')
+                        ->exists();
+                    $hasOtherActiveSession = Booking::where('id_device', $device->id)
+                        ->where('id', '!=', $booking->id)
+                        ->where('status', 'bermain')
+                        ->exists();
+
+                    $nextStatus = $hasActiveMaintenance
+                        ? 'perbaikan'
+                        : ($hasOtherActiveSession ? 'bermain' : 'tersedia');
+
+                    $device->update(['status' => $nextStatus]);
+                }
+            }
+
+            return $booking;
+        });
 
         return back()->with('success', "Sesi {$booking->kode_booking} telah diselesaikan.");
     }
 
     public function addDuration($id)
     {
-        $booking = Booking::findOrFail($id);
-        $booking->durasi += 1;
-        $booking->waktu_selesai = Carbon::parse($booking->waktu_selesai)->addHour();
-        
-        if ($booking->device) {
-            $booking->total_harga += $booking->device->harga_per_jam;
-        }
-        
-        $booking->save();
+        $booking = DB::transaction(function () use ($id) {
+            $booking = Booking::with(['device', 'payment'])->lockForUpdate()->findOrFail($id);
+
+            if ($booking->status !== 'bermain') {
+                throw ValidationException::withMessages([
+                    'booking' => 'Durasi hanya dapat ditambah untuk sesi yang sedang bermain.',
+                ]);
+            }
+
+            $currentEnd = Carbon::parse($booking->waktu_selesai);
+            $newEnd = $currentEnd->copy()->addHour();
+
+            $hasConflict = Booking::query()
+                ->where('id_device', $booking->id_device)
+                ->where('id', '!=', $booking->id)
+                ->whereNotIn('status', ['dibatalkan', 'selesai'])
+                ->where('waktu_mulai', '<', $newEnd)
+                ->where('waktu_selesai', '>', $currentEnd)
+                ->exists();
+
+            if ($hasConflict) {
+                throw ValidationException::withMessages([
+                    'durasi' => 'Tidak dapat menambah durasi karena bentrok dengan jadwal booking berikutnya.',
+                ]);
+            }
+
+            $hargaPerJam = (int) ($booking->device->harga_per_jam ?? 0);
+            $newDurasi = (int) $booking->durasi + 1;
+            [$newSubtotal, $newDiskon, $newTotalHarga] = $this->calculatePricing((int) $booking->id_user, $hargaPerJam, $newDurasi);
+
+            $booking->update([
+                'durasi' => $newDurasi,
+                'waktu_selesai' => $newEnd,
+                'subtotal' => $newSubtotal,
+                'diskon' => $newDiskon,
+                'total_harga' => $newTotalHarga,
+                'id_staff' => Auth::id(),
+            ]);
+
+            if ($booking->payment) {
+                $booking->payment->update([
+                    'jumlah' => $newTotalHarga,
+                ]);
+            } else {
+                Payment::create([
+                    'id_booking' => $booking->id,
+                    'kode_transaksi' => 'TR-' . $booking->id . strtoupper(Str::random(8)),
+                    'metode_pembayaran' => 'qris',
+                    'jumlah' => $newTotalHarga,
+                    'status_pembayaran' => 'menunggu',
+                ]);
+            }
+
+            return $booking;
+        });
 
         return back()->with('success', "Durasi {$booking->kode_booking} berhasil ditambah 1 jam.");
+    }
+
+    public function confirmPayment($id)
+    {
+        $booking = DB::transaction(function () use ($id) {
+            $booking = Booking::with('payment')->lockForUpdate()->findOrFail($id);
+
+            if ($booking->status === 'dibatalkan') {
+                throw ValidationException::withMessages([
+                    'payment' => 'Booking yang dibatalkan tidak dapat dikonfirmasi pembayarannya.',
+                ]);
+            }
+
+            $nominal = (int) ($booking->total_harga ?? $booking->subtotal ?? 0);
+
+            if (!$booking->payment) {
+                Payment::create([
+                    'id_booking' => $booking->id,
+                    'kode_transaksi' => 'TR-' . $booking->id . strtoupper(Str::random(8)),
+                    'metode_pembayaran' => 'qris',
+                    'jumlah' => $nominal,
+                    'status_pembayaran' => 'berhasil',
+                    'waktu_pembayaran' => now(),
+                ]);
+            } else {
+                $booking->payment->update([
+                    'jumlah' => $nominal,
+                    'status_pembayaran' => 'berhasil',
+                    'waktu_pembayaran' => now(),
+                ]);
+            }
+
+            if ($booking->status_konfirmasi !== 'dikonfirmasi') {
+                $booking->update([
+                    'status_konfirmasi' => 'dikonfirmasi',
+                    'id_staff' => Auth::id(),
+                ]);
+            }
+
+            return $booking;
+        });
+
+        return back()->with('success', "Pembayaran tunai booking {$booking->kode_booking} berhasil dikonfirmasi lunas.");
     }
 
     public function storeBooking(Request $request)
@@ -188,7 +386,7 @@ class StaffController extends Controller
                 ]);
             }
 
-            $totalHarga = (int) $device->harga_per_jam * $durasi;
+            [$subtotal, $diskon, $totalHarga] = $this->calculatePricing((int) $validated['id_user'], (int) $device->harga_per_jam, $durasi);
             $kodeBooking = 'STF-' . strtoupper(Str::random(8));
 
             while (Booking::where('kode_booking', $kodeBooking)->exists()) {
@@ -203,8 +401,8 @@ class StaffController extends Controller
                 'waktu_mulai' => $waktuMulai,
                 'waktu_selesai' => $waktuSelesai,
                 'durasi' => $durasi,
-                'subtotal' => $totalHarga,
-                'diskon' => 0,
+                'subtotal' => $subtotal,
+                'diskon' => $diskon,
                 'total_harga' => $totalHarga,
                 'status' => 'menunggu',
                 'status_konfirmasi' => 'dikonfirmasi',
@@ -255,7 +453,7 @@ class StaffController extends Controller
                 ]);
             }
 
-            $totalHarga = (int) $device->harga_per_jam * $durasi;
+            [$subtotal, $diskon, $totalHarga] = $this->calculatePricing((int) $validated['id_user'], (int) $device->harga_per_jam, $durasi);
             $kodeBooking = 'GH-' . now()->format('dmy') . '-' . strtoupper(Str::random(6));
 
             while (Booking::where('kode_booking', $kodeBooking)->exists()) {
@@ -269,8 +467,8 @@ class StaffController extends Controller
                 'waktu_mulai' => $waktuMulai,
                 'waktu_selesai' => $waktuSelesai,
                 'durasi' => $durasi,
-                'subtotal' => $totalHarga,
-                'diskon' => 0,
+                'subtotal' => $subtotal,
+                'diskon' => $diskon,
                 'total_harga' => $totalHarga,
                 'status' => 'bermain',
                 'status_konfirmasi' => 'dikonfirmasi',
@@ -283,7 +481,8 @@ class StaffController extends Controller
                 'kode_transaksi' => 'TR-' . $booking->id . strtoupper(Str::random(8)),
                 'metode_pembayaran' => 'qris',
                 'jumlah' => $totalHarga,
-                'status_pembayaran' => 'menunggu',
+                'status_pembayaran' => 'berhasil',
+                'waktu_pembayaran' => $waktuMulai,
             ]);
 
             $device->update(['status' => 'bermain']);
@@ -310,17 +509,58 @@ class StaffController extends Controller
         }
 
         DB::transaction(function () use ($device, $validated) {
+            $lockedDevice = Device::query()->lockForUpdate()->findOrFail($device->id);
+
             Maintenance::create([
-                'id_device' => $device->id,
+                'id_device' => $lockedDevice->id,
                 'keterangan' => $validated['keterangan'],
                 'waktu_mulai' => now(),
                 'waktu_selesai' => null,
                 'status' => 'berlangsung',
             ]);
 
-            $device->update(['status' => 'perbaikan']);
+            $lockedDevice->update(['status' => 'perbaikan']);
         });
 
         return back()->with('success', "Tiket maintenance {$device->nama_device} berhasil dikirim ke admin.");
+    }
+
+    public function completeMaintenance($id)
+    {
+        $maintenance = DB::transaction(function () use ($id) {
+            $maintenance = Maintenance::with('device')->lockForUpdate()->findOrFail($id);
+
+            if ($maintenance->status !== 'selesai') {
+                $maintenance->update([
+                    'status' => 'selesai',
+                    'waktu_selesai' => now(),
+                ]);
+
+                if ($maintenance->device) {
+                    $device = Device::query()->lockForUpdate()->find($maintenance->id_device);
+                    if ($device) {
+                        $hasOtherMaintenance = Maintenance::where('id_device', $device->id)
+                            ->where('id', '!=', $maintenance->id)
+                            ->where('status', 'berlangsung')
+                            ->exists();
+                        $hasActiveSession = Booking::where('id_device', $device->id)
+                            ->where('status', 'bermain')
+                            ->exists();
+
+                        $nextStatus = $hasOtherMaintenance
+                            ? 'perbaikan'
+                            : ($hasActiveSession ? 'bermain' : 'tersedia');
+
+                        $device->update(['status' => $nextStatus]);
+                    }
+                }
+            }
+
+            return $maintenance;
+        });
+
+        $namaDevice = $maintenance->device->nama_device ?? 'perangkat';
+
+        return back()->with('success', "Perbaikan {$namaDevice} telah diselesaikan dan perangkat kembali tersedia.");
     }
 }

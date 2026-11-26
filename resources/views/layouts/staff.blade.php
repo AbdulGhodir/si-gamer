@@ -40,10 +40,7 @@
                        class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ $dashboardActive ? $activeNavClass : $inactiveNavClass }} text-sm transition"
                        @if($dashboardActive) aria-current="page" @endif>
                         <i class="fa-solid fa-table-cells-large w-5 text-center"></i>
-                        <span class="flex-1">Dashboard</span>
-                        @if($dashboardActive)
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                        @endif
+                        <span>Dashboard</span>
                     </a>
 
                     <a href="{{ route('staff.bookings') }}"
@@ -104,36 +101,38 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto px-8 py-6">
-        <header class="flex justify-between items-center pb-6">
-            <div class="flex items-center space-x-3">
-                <div class="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center text-white text-xs">
-                    <i class="fa-solid fa-gamepad"></i>
+        <div class="w-full max-w-7xl mx-auto">
+            <header class="flex justify-between items-center pb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center text-white text-xs">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </div>
+                    <span class="font-bold text-white text-sm">GameHub</span>
                 </div>
-                <span class="font-bold text-white text-sm">GameHub</span>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                    {{ strtoupper(substr(Auth::user()->nama ?? 'S', 0, 1)) }}
+                <div class="flex items-center space-x-4">
+                    <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                        {{ strtoupper(substr(Auth::user()->nama ?? 'S', 0, 1)) }}
+                    </div>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        @if(session('success'))
-            <div class="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center space-x-2">
-                <i class="fa-solid fa-circle-check text-sm"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
+            @if(session('success'))
+                <div class="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center space-x-2">
+                    <i class="fa-solid fa-circle-check text-sm"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
 
-        @if($errors->any())
-            <div class="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
-                @foreach ($errors->all() as $error)
-                    <p>&bull; {{ $error }}</p>
-                @endforeach
-            </div>
-        @endif
+            @if($errors->any())
+                <div class="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+                    @foreach ($errors->all() as $error)
+                        <p>&bull; {{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
 
-        @yield('content')
+            @yield('content')
+        </div>
     </main>
 
     <x-lucide />

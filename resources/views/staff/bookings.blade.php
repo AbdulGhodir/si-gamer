@@ -112,16 +112,24 @@
                             <span class="inline-flex px-2 py-1 rounded text-[10px] font-medium {{ $statusClass }}">{{ ucfirst($booking->status) }}</span>
                         </td>
                         <td class="py-3 text-right">
-                            @if($booking->status === 'menunggu')
-                                <form action="{{ route('staff.booking.checkin', $booking->id) }}" method="POST" class="inline" onsubmit="return confirm('Check-in booking ini dan mulai sesi?')">
-                                    @csrf
-                                    <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-medium px-3 py-1.5 rounded transition">Check-in</button>
-                                </form>
-                            @elseif($booking->status === 'bermain')
-                                <a href="{{ route('staff.sessions') }}" class="text-purple-400 hover:text-purple-300">Lihat sesi</a>
-                            @else
-                                <span class="text-slate-500">—</span>
-                            @endif
+                            <div class="inline-flex items-center justify-end gap-2">
+                                @if($booking->status !== 'dibatalkan' && ($booking->payment->status_pembayaran ?? 'menunggu') !== 'berhasil')
+                                    <form action="{{ route('staff.booking.confirm_payment', $booking->id) }}" method="POST" class="inline" onsubmit="return confirm('Konfirmasi pembayaran tunai di tempat untuk booking ini?')">
+                                        @csrf
+                                        <button type="submit" class="bg-[#232534] hover:bg-emerald-600 text-white text-[11px] font-medium px-3 py-1.5 rounded transition">Terima bayar</button>
+                                    </form>
+                                @endif
+                                @if($booking->status === 'menunggu')
+                                    <form action="{{ route('staff.booking.checkin', $booking->id) }}" method="POST" class="inline" onsubmit="return confirm('Check-in booking ini dan mulai sesi?')">
+                                        @csrf
+                                        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-medium px-3 py-1.5 rounded transition">Check-in</button>
+                                    </form>
+                                @elseif($booking->status === 'bermain')
+                                    <a href="{{ route('staff.sessions') }}" class="text-purple-400 hover:text-purple-300">Lihat sesi</a>
+                                @elseif(($booking->payment->status_pembayaran ?? 'menunggu') === 'berhasil' || $booking->status === 'dibatalkan')
+                                    <span class="text-slate-500">—</span>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

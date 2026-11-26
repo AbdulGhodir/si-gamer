@@ -29,7 +29,7 @@
                     @php
                         $waktuMulai = \Carbon\Carbon::parse($sesi->waktu_mulai);
                         $waktuSelesai = \Carbon\Carbon::parse($sesi->waktu_selesai);
-                        $sisaMenit = max(0, now()->diffInMinutes($waktuSelesai, false));
+                        $sisaMenit = max(0, (int) floor(now()->diffInMinutes($waktuSelesai, false)));
                     @endphp
                     <tr>
                         <td class="py-4">
@@ -38,9 +38,15 @@
                         </td>
                         <td class="py-4 text-slate-300">{{ $sesi->device->nama_device ?? '-' }}</td>
                         <td class="py-4 text-slate-400">{{ $waktuMulai->format('H.i') }}–{{ $waktuSelesai->format('H.i') }} WIB</td>
-                        <td class="py-4 font-semibold text-white">{{ sprintf('%02d:%02d', floor($sisaMenit / 60), $sisaMenit % 60) }}</td>
+                        <td class="py-4 font-semibold text-white">{{ sprintf('%02d:%02d', intdiv($sisaMenit, 60), $sisaMenit % 60) }}</td>
                         <td class="py-4 text-right">
                             <div class="inline-flex gap-2">
+                                @if(($sesi->payment->status_pembayaran ?? 'menunggu') !== 'berhasil')
+                                    <form action="{{ route('staff.booking.confirm_payment', $sesi->id) }}" method="POST" onsubmit="return confirm('Konfirmasi pembayaran tunai di tempat untuk sesi ini?')">
+                                        @csrf
+                                        <button type="submit" class="bg-[#232534] hover:bg-emerald-600 text-white text-xs px-3 py-1.5 rounded transition">Terima bayar</button>
+                                    </form>
+                                @endif
                                 <form action="{{ route('staff.booking.add_duration', $sesi->id) }}" method="POST" onsubmit="return confirm('Tambah durasi sesi ini 1 jam?')">
                                     @csrf
                                     <button type="submit" class="bg-[#232534] hover:bg-purple-600 text-white text-xs px-3 py-1.5 rounded transition">+1 jam</button>
