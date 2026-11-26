@@ -42,20 +42,20 @@
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
             <p class="text-xs text-gray-400">Dikonfirmasi</p>
             <h2 class="text-2xl font-bold text-emerald-400 mt-1">{{ $dikonfirmasiCount }}</h2>
-            <p class="text-xs text-gray-400 mt-2">Slot perangkat siap</p>
+            <p class="text-xs text-gray-400 mt-2">Dikonfirmasi staff</p>
         </div>
         <div class="bg-[#141221] border border-gray-800/80 p-5 rounded-2xl shadow-sm">
             <p class="text-xs text-gray-400">Menunggu</p>
             <h2 class="text-2xl font-bold text-amber-400 mt-1">{{ $menungguCount }}</h2>
-            <p class="text-xs text-gray-400 mt-2">Perlu konfirmasi jadwal</p>
+            <p class="text-xs text-gray-400 mt-2">Menunggu check-in staff</p>
         </div>
     </div>
 
     <!-- Tabel Jadwal Booking -->
     <div class="bg-[#141221] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div class="p-4 border-b border-gray-800 flex justify-between items-center">
-            <h3 class="font-semibold text-white">Jadwal Booking Aktif</h3>
-            <span class="text-xs text-gray-400">Klik status untuk mengubah setelah konfirmasi</span>
+            <h3 class="font-semibold text-white">Jadwal Booking</h3>
+            <span class="text-xs text-gray-400">Informasi booking dan pembayaran</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="bookingsTable">
@@ -73,18 +73,10 @@
                 <tbody class="divide-y divide-gray-800/60 text-sm" id="bookingsTableBody">
                     @forelse($bookingList as $b)
                     @php
-                        $modelId = $b['model_id'] ?? null;
                         $bookingStatus = $b['status'] ?? 'Menunggu';
                         $isConfirmed = $bookingStatus === 'Dikonfirmasi';
                         $paymentStatus = $b['status_bayar'] ?? 'Belum bayar';
                         $isPaid = $paymentStatus === 'Lunas';
-                        $canToggleStatus = ($b['status_raw'] ?? 'menunggu') === 'menunggu';
-                        $paymentConfirm = $isPaid
-                            ? 'Ubah status pembayaran booking ini menjadi belum bayar?'
-                            : 'Tandai pembayaran booking ini sebagai lunas?';
-                        $bookingConfirm = $isConfirmed
-                            ? 'Batalkan konfirmasi booking ini?'
-                            : 'Konfirmasi booking ini?';
                         $totalHarga = $b['total'] ?? 'Rp0';
                     @endphp
                     <tr class="booking-row hover:bg-white/[0.02] transition">
@@ -94,36 +86,14 @@
                         <td class="p-4 text-purple-400">{{ $b['durasi'] ?? '-' }}</td>
                         <td class="p-4 font-semibold text-white">{{ $totalHarga }}</td>
                         <td class="p-4">
-                            @if($modelId)
-                                <form action="{{ route('admin.bookings.toggle_payment', $modelId) }}" method="POST" class="inline"
-                                      onsubmit="return confirm(@js($paymentConfirm))">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isPaid ? 'bg-emerald-900/50 text-emerald-300' : 'bg-rose-900/50 text-rose-300' }}" title="Klik untuk ubah status pembayaran">
-                                        {{ $paymentStatus }}
-                                    </button>
-                                </form>
-                            @else
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $isPaid ? 'bg-emerald-900/50 text-emerald-300' : 'bg-rose-900/50 text-rose-300' }}">
-                                    {{ $paymentStatus }}
-                                </span>
-                            @endif
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $isPaid ? 'bg-emerald-900/50 text-emerald-300' : 'bg-rose-900/50 text-rose-300' }}">
+                                {{ $paymentStatus }}
+                            </span>
                         </td>
                         <td class="p-4">
-                            @if($modelId && $canToggleStatus)
-                                <form action="{{ route('admin.bookings.toggle_status', $modelId) }}" method="POST" class="inline"
-                                      onsubmit="return confirm(@js($bookingConfirm))">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $isConfirmed ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}" title="Klik untuk ubah status booking">
-                                        {{ $bookingStatus }}
-                                    </button>
-                                </form>
-                            @else
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $isConfirmed ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}">
-                                    {{ $bookingStatus }}
-                                </span>
-                            @endif
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $isConfirmed ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300' }}">
+                                {{ $bookingStatus }}
+                            </span>
                         </td>
                     </tr>
                     @empty

@@ -86,7 +86,7 @@ class CustomerBookingController extends Controller
             }
 
             $subTotalHarga = (int) $lockedDevice->harga_per_jam * $durasi;
-            $diskon = $membership ? $subTotalHarga * 0.05 : 0;
+            $diskon = $membership ? (int) round($subTotalHarga * 0.05) : 0;
             $totalHarga = $subTotalHarga - $diskon;
             $kodeBooking = 'BK-' . mt_rand(10000, 99999);
 
@@ -103,7 +103,7 @@ class CustomerBookingController extends Controller
                 'durasi' => $durasi,
                 'subtotal' => $subTotalHarga,
                 'total_harga' => $totalHarga,
-                'diskon' => $membership && $membership->status === 'aktif' ? 0.05 : 0,
+                'diskon' => $diskon,
                 'status' => 'menunggu',
                 'status_konfirmasi' => 'belum_dikonfirmasi',
                 'id_staff' => null,
