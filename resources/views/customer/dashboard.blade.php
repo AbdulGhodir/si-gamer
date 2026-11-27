@@ -51,7 +51,7 @@
                         onclick="filterType('all')"
                         id="btn-all"
                         class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white border border-white focus:outline-none transition-colors cursor-pointer">
-                    Semua
+                    Semua tipe
                 </button>
                 <button type="button"
                         onclick="filterType('PC')"
@@ -80,33 +80,23 @@
                         onclick="filterCategory('all')"
                         id="btn-category-all"
                         class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white border border-white focus:outline-none transition-colors cursor-pointer">
-                    Semua
+                    Semua kategori
                 </button>
-                <button type="button"
-                        onclick="filterCategory('Reguler')"
-                        id="btn-category-Reguler"
-                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
-                    Reguler
-                </button>
-                <button type="button"
-                        onclick="filterCategory('VIP')"
-                        id="btn-category-VIP"
-                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
-                    VIP
-                </button>
-                <button type="button"
-                        onclick="filterCategory('VVIP')"
-                        id="btn-category-VVIP"
-                        class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
-                    VVIP
-                </button>
+                @foreach($categories as $category)
+                    <button type="button"
+                            onclick="filterCategory(@js($category))"
+                            id="btn-category-{{ $category }}"
+                            class="filter-btn-category px-4 py-2 rounded-lg text-xs font-semibold bg-[#161124] text-[#8B7EA1] hover:text-white border border-[#2D2442] focus:outline-none transition-colors cursor-pointer">
+                        {{ $category }}
+                    </button>
+                @endforeach
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="device-grid">
         @foreach($devices as $device)
-            <div class="device-card bg-[#130B29] border border-[#2D2442] hover:border-purple-500/60 rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-lg"
+            <div class="device-card h-full min-h-[34rem] bg-[#130B29] border border-[#2D2442] hover:border-purple-500/60 rounded-2xl p-5 flex flex-col transition-colors shadow-lg"
                  data-tipe="{{ $device->tipe }}" data-category="{{ $device->kategori }}">
 
                 <div class="w-full h-44 rounded-xl bg-[#0B0812] border border-[#2D2442] flex items-center justify-center mb-5">
@@ -126,7 +116,7 @@
                     @endif
                 </div>
 
-                <div class="flex flex-col gap-2 mb-6">
+                <div class="flex flex-1 flex-col gap-2 mb-6">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold tracking-wider uppercase text-purple-400">
                             {{ $device->tipe }}
@@ -138,12 +128,12 @@
                         </span>
                     </div>
 
-                    <h3 class="text-lg font-bold text-white tracking-wide leading-tight">
+                    <h3 class="min-h-12 text-lg font-bold text-white tracking-wide leading-tight">
                         {{ $device->nama_device }}
                     </h3>
 
-                    <p class="text-xs text-[#8B7EA1] leading-relaxed line-clamp-2">
-                        {{ $device->spesifikasi }}
+                    <p class="min-h-8 text-xs text-[#8B7EA1] leading-relaxed line-clamp-2">
+                        {{ $device->spesifikasi ?: 'Spesifikasi belum tersedia.' }}
                     </p>
 
                     <div class="mt-2 flex items-baseline gap-1">
@@ -154,7 +144,7 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between pt-4 border-t border-[#2D2442]">
+                <div class="flex min-h-16 items-center justify-between gap-3 pt-4 border-t border-[#2D2442]">
 
                     <div>
                         @if($device->status === 'tersedia')
@@ -162,36 +152,45 @@
                                 <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                                 <span class="text-xs font-semibold text-emerald-400">Tersedia</span>
                             </div>
-                        @elseif($device->status === 'penuh')
+                        @elseif($device->status === 'dipesan')
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                                <span class="text-xs font-semibold text-blue-400">Dipesan</span>
+                            </div>
+                        @elseif($device->status === 'bermain')
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                                <span class="text-xs font-semibold text-purple-400">Sedang digunakan</span>
+                            </div>
+                        @elseif(in_array($device->status, ['penuh', 'offline']))
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-red-400"></span>
-                                <span class="text-xs font-semibold text-red-400">Penuh</span>
+                                <span class="text-xs font-semibold text-red-400">{{ $device->status === 'penuh' ? 'Penuh' : 'Offline' }}</span>
                             </div>
-                        @elseif($device->status === 'maintenance')
+                        @elseif(in_array($device->status, ['maintenance', 'perbaikan']))
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                                 <span class="text-xs font-semibold text-amber-400">Maintenance</span>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                <span class="text-xs font-semibold text-slate-400">{{ ucfirst($device->status) }}</span>
                             </div>
                         @endif
                     </div>
 
                     <div>
-                        @if($device->status === 'tersedia')
+                        @if(in_array($device->status, ['tersedia', 'dipesan', 'bermain']))
                             <a href="{{ route('customer.booking', ['device' => $device->id]) }}"
                                class="inline-block px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs tracking-wide transition-colors cursor-pointer shadow-md shadow-purple-600/20 text-center">
                                 Booking
                             </a>
-                        @elseif($device->status === 'penuh')
+                        @else
                             <button type="button"
                                     disabled
                                     class="px-5 py-2 rounded-lg bg-[#161124] text-[#8B7EA1] border border-[#2D2442] font-semibold text-xs tracking-wide cursor-not-allowed">
-                                Penuh
-                            </button>
-                        @elseif($device->status === 'maintenance')
-                            <button type="button"
-                                    disabled
-                                    class="px-5 py-2 rounded-lg bg-[#161124] text-[#8B7EA1] border border-[#2D2442] font-semibold text-xs tracking-wide cursor-not-allowed">
-                                Maintenance
+                                {{ in_array($device->status, ['maintenance', 'perbaikan']) ? 'Maintenance' : ($device->status === 'penuh' ? 'Penuh' : 'Offline') }}
                             </button>
                         @endif
                     </div>
@@ -200,14 +199,32 @@
         @endforeach
 
     </div>
+    @if($devices->isEmpty())
+        <div class="rounded-xl border border-[#2D2442] bg-[#130B29] px-4 py-8 text-center">
+            <p class="text-sm font-semibold text-white">Belum ada perangkat tersedia di katalog.</p>
+            <p class="text-xs text-[#8B7EA1] mt-1">Silakan hubungi admin untuk informasi lebih lanjut.</p>
+        </div>
+    @else
+        <div id="device-filter-empty" class="hidden rounded-xl border border-[#2D2442] bg-[#130B29] px-4 py-8 text-center">
+            <p class="text-sm font-semibold text-white">Tidak ada perangkat yang cocok dengan filter ini.</p>
+            <button type="button" onclick="filterType('all'); filterCategory('all')"
+                    class="mt-3 text-xs font-semibold text-purple-400 hover:text-purple-300">
+                Tampilkan semua perangkat
+            </button>
+        </div>
+    @endif
 </div>
 
 <script>
     let selectedType = 'all';
     let selectedCategory = 'all';
 
-    function filterType(type='all', category='all') {
-        selectedType = type;
+    function normalizeFilterValue(value) {
+        return (value ?? '').trim().toLowerCase();
+    }
+
+    function filterType(type='all') {
+        selectedType = normalizeFilterValue(type);
 
         const buttons = document.querySelectorAll('.filter-btn');
         buttons.forEach(btn => {
@@ -225,7 +242,7 @@
     }
 
     function filterCategory(category) {
-        selectedCategory = category;
+        selectedCategory = normalizeFilterValue(category);
 
         const buttons = document.querySelectorAll('.filter-btn-category');
         buttons.forEach(btn => {
@@ -244,20 +261,27 @@
 
     function applyFilters() {
         const cards = document.querySelectorAll('.device-card');
+        const emptyState = document.getElementById('device-filter-empty');
+        let visibleCount = 0;
 
         cards.forEach(card => {
-            const cardType = card.getAttribute('data-tipe');
-            const cardCategory = card.getAttribute('data-category');
+            const cardType = normalizeFilterValue(card.getAttribute('data-tipe'));
+            const cardCategory = normalizeFilterValue(card.getAttribute('data-category'));
 
             const typeMatch = (selectedType === 'all' || cardType === selectedType);
             const categoryMatch = (selectedCategory === 'all' || cardCategory === selectedCategory);
 
             if (typeMatch && categoryMatch) {
                 card.style.display = 'flex';
+                visibleCount++;
             } else {
                 card.style.display = 'none';
             }
         });
+
+        if (emptyState) {
+            emptyState.classList.toggle('hidden', visibleCount > 0);
+        }
     }
 </script>
 @endsection

@@ -143,8 +143,12 @@
 
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Kategori</label>
-                    <input type="text" name="kategori" id="inputKategoriDevice" placeholder="Contoh: Reguler / VIP"
+                    <select name="kategori" id="inputKategoriDevice" required
                         class="w-full bg-[#0b0a12] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-600">
+                        <option value="Reguler">Reguler</option>
+                        <option value="VIP">VIP</option>
+                        <option value="VVIP">VVIP</option>
+                    </select>
                 </div>
             </div>
 

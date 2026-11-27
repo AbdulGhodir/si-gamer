@@ -28,30 +28,16 @@
 
     <form action="{{ route('customer.profile.update') }}"
           method="POST"
-          enctype="multipart/form-data"
           class="bg-[#130B29] border border-[#2D2442] rounded-2xl p-7 flex flex-col gap-6">
 
         @csrf
         @method('PUT')
 
         <div class="flex flex-col items-center gap-3">
-            @if($user->foto_profil)
-                <img
-                    src="{{ asset('storage/' . $user->foto_profil) }}"
-                    class="w-28 h-28 rounded-full object-cover border-2 border-purple-500"
-                    alt="Foto Profil">
-            @else
-                <div class="w-28 h-28 rounded-full bg-[#211638] border-2 border-purple-500 flex items-center justify-center">
-                    <i class="ph ph-user text-5xl text-purple-400"></i>
-                </div>
-            @endif
-
-            <label class="text-sm text-purple-400 font-semibold cursor-pointer">
-                Ganti Foto Profil
-                <input type="file" name="foto_profil" accept="image/*" class="hidden">
-            </label>
-
-            <p class="text-xs text-[#8B7EA1]">JPG, PNG, WEBP maksimal 2 MB.</p>
+            <div class="w-28 h-28 rounded-full bg-[#211638] border-2 border-purple-500 flex items-center justify-center"
+                 aria-label="Avatar pengguna">
+                <i class="ph ph-user text-5xl text-purple-400" aria-hidden="true"></i>
+            </div>
         </div>
 
         <div>

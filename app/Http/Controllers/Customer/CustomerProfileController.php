@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Membership;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class CustomerProfileController extends Controller
@@ -66,8 +65,6 @@ class CustomerProfileController extends Controller
 
             'email' => 'required|email|max:255|unique:users,email,' . $user->id . ',id',
 
-            'foto_profil' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-
             'password' => [
                 'nullable',
                 'confirmed',
@@ -80,25 +77,11 @@ class CustomerProfileController extends Controller
             'email' => $validated['email'],
         ];
 
-        $fotoLama = $user->foto_profil;
-
-        if ($request->hasFile('foto_profil')) {
-            $data['foto_profil'] = $request->file('foto_profil')
-                ->store('foto-profil', 'public');
-        }
-
         if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
         $user->forceFill($data)->save();
-
-        if (
-            $request->hasFile('foto_profil') &&
-            $fotoLama
-        ) {
-            Storage::disk('public')->delete($fotoLama);
-        }
 
         return redirect()
             ->route('customer.profile')

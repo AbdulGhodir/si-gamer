@@ -195,7 +195,7 @@ class AdminDashboardController extends Controller
             'tipe'          => 'required|in:PS4,PS5,PC',
             'harga_per_jam' => 'required|integer|min:0',
             'status'        => 'required|in:tersedia,dipesan,bermain,perbaikan,offline',
-            'kategori'      => 'nullable|string|max:100',
+            'kategori'      => 'required|in:Reguler,VIP,VVIP',
             'spesifikasi'   => 'nullable|string|max:500',
         ]);
 
@@ -213,7 +213,7 @@ class AdminDashboardController extends Controller
             'tipe'          => 'required|in:PS4,PS5,PC',
             'harga_per_jam' => 'required|integer|min:0',
             'status'        => 'required|in:tersedia,dipesan,bermain,perbaikan,offline',
-            'kategori'      => 'nullable|string|max:100',
+            'kategori'      => 'required|in:Reguler,VIP,VVIP',
             'spesifikasi'   => 'nullable|string|max:500',
         ]);
 

@@ -11,9 +11,11 @@ class CustomerDashboardController extends Controller
     public function index()
     {
         $devices = Device::all();
+        $categories = $devices->pluck('kategori')
+            ->filter()
+            ->unique()
+            ->values();
 
-        return view('customer.dashboard', compact(
-            'devices'
-        ));
+        return view('customer.dashboard', compact('devices', 'categories'));
     }
 }

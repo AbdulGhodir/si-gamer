@@ -63,17 +63,10 @@
                             </span>
                         </div>
 
-                        @if(Auth::user()->foto_profil)
-                            <img
-                                src="{{ asset('storage/' . Auth::user()->foto_profil) }}"
-                                class="w-10 h-10 rounded-full object-cover border border-purple-500 group-hover:border-purple-300 transition-colors"
-                                alt="Foto Profil"
-                            >
-                        @else
-                            <div class="w-10 h-10 rounded-full bg-[#161124] border border-[#2D2442] flex items-center justify-center text-purple-400 group-hover:border-purple-500 transition-colors">
-                                <i class="ph ph-user text-xl"></i>
-                            </div>
-                        @endif
+                        <div class="w-10 h-10 rounded-full bg-[#161124] border border-[#2D2442] flex items-center justify-center text-purple-400 group-hover:border-purple-500 transition-colors"
+                             aria-label="Avatar pengguna">
+                            <i class="ph ph-user text-xl" aria-hidden="true"></i>
+                        </div>
 
                         <i class="ph ph-caret-down text-[#8B7EA1] text-sm transition-transform group-open:rotate-180"></i>
 
